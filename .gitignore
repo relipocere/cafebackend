@@ -1,3 +1,7 @@
+.idea
+local-db
+.env
+.DS_Store
 # Binaries for programs and plugins
 *.exe
 *.exe~
