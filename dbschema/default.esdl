@@ -40,8 +40,19 @@ module default {
         required property salt -> str;
         required property created_at -> datetime;
         required property updated_at -> datetime;
+        link session -> AuthSession{
+            constraint exclusive;
+            on source delete delete target;
+        }
 
         index on (.username);
+    }
+
+    type AuthSession{
+        required property session_id -> str{
+            constraint exclusive;
+        };
+        required property expires_at -> datetime;
     }
 
     type Product{

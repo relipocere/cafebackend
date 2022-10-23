@@ -1,0 +1,11 @@
+# fill the values and rename file to config.toml
+[edgedb]
+host=""
+port="5656"
+user=""
+password=""
+database=""
+
+[server]
+# Overrides default port 9000
+port=""

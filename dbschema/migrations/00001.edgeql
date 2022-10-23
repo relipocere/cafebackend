@@ -1,8 +1,18 @@
-CREATE MIGRATION m1ofebno3ebi3hscb5hhqfztp6l7f4t7qowna4ffjxsnubz2dleupa
+CREATE MIGRATION m1b67kksepmhtqso6hoznfro4oq53g4ze7jsr3w6reyeo7qmlbxkha
     ONTO initial
 {
+  CREATE TYPE default::AuthSession {
+      CREATE REQUIRED PROPERTY expires_at -> std::datetime;
+      CREATE REQUIRED PROPERTY session_id -> std::str {
+          CREATE CONSTRAINT std::exclusive;
+      };
+  };
   CREATE SCALAR TYPE default::UserKind EXTENDING enum<Consumer, Business>;
   CREATE TYPE default::User {
+      CREATE LINK session -> default::AuthSession {
+          ON SOURCE DELETE DELETE TARGET;
+          CREATE CONSTRAINT std::exclusive;
+      };
       CREATE REQUIRED PROPERTY username -> std::str {
           CREATE CONSTRAINT std::exclusive;
       };
