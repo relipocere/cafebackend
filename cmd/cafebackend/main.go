@@ -6,7 +6,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/edgedb/edgedb-go"
+	"github.com/gin-gonic/gin"
+	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
+	"github.com/relipocere/cafebackend/internal/database/user"
+	"github.com/relipocere/cafebackend/internal/graph"
+	"github.com/relipocere/cafebackend/internal/graph/generated"
+	"github.com/relipocere/cafebackend/internal/graph/middleware"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -17,26 +25,49 @@ func main() {
 	log := mustInitLogger(true)
 	defer closerCleanup(log)
 
-	client := mustCreateDBClient(ctx, log)
-	closerAdd(client.Close)
+	mustInitViper(log)
 
+	edgeClient := mustCreateDBClient(ctx, log)
+	closerAdd(edgeClient.Close)
+
+	userRepo := user.NewRepo()
+
+	userHandler := userhandler.NewHandler(edgeClient, userRepo)
+
+	resolver := graph.NewResolver(userHandler)
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(resolver))
+	srv.SetErrorPresenter(middleware.ErrorHandlerMw(log))
+
+	router := gin.Default()
+	router.Use(middleware.AuthenticationMW(edgeClient, userRepo))
+
+	router.POST("/query", func(c *gin.Context) {
+		srv.ServeHTTP(c.Writer, c.Request)
+	})
+
+	port := viper.GetString("server.port")
+	log.Infof("starting server at port %s", port)
+
+	err := router.Run(port)
+	if err != nil {
+		log.Errorf("can't start server: %v", err)
+		return
+	}
 }
 
 func mustCreateDBClient(ctx context.Context, log *zap.SugaredLogger) *edgedb.Client {
-	user := mustGetEnv(log, "EDGEDB_USER")
-	password := mustGetEnv(log, "EDGEDB_PASSWORD")
-	host := mustGetEnv(log, "EDGEDB_HOST")
-	port := mustGetEnv(log, "PORT")
-	db := mustGetEnv(log, "EDGEDB_DATABASE")
-	certPath := mustGetEnv(log, "EDGEDB_CERT_PATH")
+	usr := viper.Get("edgedb.user")
+	password := viper.Get("edgedb.password")
+	host := viper.Get("edgedb.host")
+	port := viper.Get("edgedb.port")
+	db := viper.Get("edgedb.database")
 
-	dsn := fmt.Sprintf("edgedb://%s:%s@%s:%s/%s?tls_ca_file=%s",
-		user,
+	dsn := fmt.Sprintf("edgedb://%s:%s@%s:%s/%s?tls_security=insecure",
+		usr,
 		password,
 		host,
 		port,
 		db,
-		certPath,
 	)
 
 	client, err := edgedb.CreateClientDSN(ctx, dsn, edgedb.Options{
@@ -49,13 +80,17 @@ func mustCreateDBClient(ctx context.Context, log *zap.SugaredLogger) *edgedb.Cli
 	return client
 }
 
-func mustGetEnv(log *zap.SugaredLogger, key string) string {
-	val, ok := os.LookupEnv(key)
-	if !ok {
-		log.Fatalf("env '%s' is not set", key)
-	}
+func mustInitViper(log *zap.SugaredLogger) {
+	viper.SetConfigName("config")
+	viper.SetConfigType("toml")
+	viper.AddConfigPath(".")
 
-	return val
+	viper.SetDefault("server.port", ":9000")
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("can't read secrets: %v", err)
+	}
 }
 
 var closers []func() error

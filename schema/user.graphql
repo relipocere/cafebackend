@@ -1,0 +1,27 @@
+enum UserKindEnum{
+    CONSUMER
+    BUSINESS
+}
+
+input CreateUserInput{
+    username: String!
+    password: String!
+    kind: UserKindEnum!
+    fullName: String!
+}
+
+input GetAuthTokenInput{
+    username: String!
+    password: String!
+}
+
+type GetAuthTokenPayload{
+    token: String!
+}
+
+type User{
+    uuid: String!
+    username: String!
+    kind: UserKindEnum!
+    fullName: String!
+}

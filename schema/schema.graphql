@@ -1,0 +1,15 @@
+type Mutation{
+    createUser(input: CreateUserInput!): Boolean!
+}
+
+type Query{
+    getAuthToken(input: GetAuthTokenInput!): GetAuthTokenPayload!
+    me: User! @isAuthenticated
+}
+
+scalar Time
+scalar Upload
+
+directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+directive @isAuthenticated on FIELD_DEFINITION
