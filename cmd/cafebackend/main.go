@@ -9,7 +9,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/edgedb/edgedb-go"
 	"github.com/gin-gonic/gin"
+	storehandler "github.com/relipocere/cafebackend/internal/business/store-handler"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
+	"github.com/relipocere/cafebackend/internal/database/store"
 	"github.com/relipocere/cafebackend/internal/database/user"
 	"github.com/relipocere/cafebackend/internal/graph"
 	"github.com/relipocere/cafebackend/internal/graph/generated"
@@ -31,10 +33,12 @@ func main() {
 	closerAdd(edgeClient.Close)
 
 	userRepo := user.NewRepo()
+	storeRepo := store.NewRepo()
 
 	userHandler := userhandler.NewHandler(edgeClient, userRepo)
+	storeHandler := storehandler.NewHandler(edgeClient, storeRepo)
 
-	resolver := graph.NewResolver(userHandler)
+	resolver := graph.NewResolver(userHandler, storeHandler)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(resolver))
 	srv.SetErrorPresenter(middleware.ErrorHandlerMw(log))
 

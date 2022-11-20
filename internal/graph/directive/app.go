@@ -23,13 +23,9 @@ func (a *App) IsAuthenticated(ctx context.Context, obj interface{}, next graphql
 		Code:    model.ErrorCodeUnauthenticated,
 	}
 
-	userVal := ctx.Value("user")
-	if userVal == nil {
-		return nil, unauthenticatedErr
-	}
-
-	user, ok := userVal.(*model.User)
-	if !ok || user == nil {
+	// if can't cast to user or no value is present
+	_, ok := ctx.Value("user").(model.User)
+	if !ok {
 		return nil, unauthenticatedErr
 	}
 

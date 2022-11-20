@@ -6,7 +6,15 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 )
+
+type CreateStoreInput struct {
+	Title         string        `json:"title"`
+	Affordability Affordability `json:"affordability"`
+	CuisineType   CuisineType   `json:"cuisineType"`
+	ImageID       string        `json:"imageID"`
+}
 
 type CreateUserInput struct {
 	Username string       `json:"username"`
@@ -24,11 +32,107 @@ type GetAuthTokenPayload struct {
 	Token string `json:"token"`
 }
 
+type Store struct {
+	ID            string        `json:"id"`
+	Title         string        `json:"title"`
+	Affordability Affordability `json:"affordability"`
+	CuisineType   CuisineType   `json:"cuisineType"`
+	ImageID       string        `json:"imageID"`
+	CreatedAt     time.Time     `json:"createdAt"`
+	UpdatedAt     time.Time     `json:"updatedAt"`
+}
+
 type User struct {
 	UUID     string       `json:"uuid"`
 	Username string       `json:"username"`
 	Kind     UserKindEnum `json:"kind"`
 	FullName string       `json:"fullName"`
+}
+
+type Affordability string
+
+const (
+	AffordabilityCheap      Affordability = "CHEAP"
+	AffordabilityAffordable Affordability = "AFFORDABLE"
+	AffordabilityExpensive  Affordability = "EXPENSIVE"
+)
+
+var AllAffordability = []Affordability{
+	AffordabilityCheap,
+	AffordabilityAffordable,
+	AffordabilityExpensive,
+}
+
+func (e Affordability) IsValid() bool {
+	switch e {
+	case AffordabilityCheap, AffordabilityAffordable, AffordabilityExpensive:
+		return true
+	}
+	return false
+}
+
+func (e Affordability) String() string {
+	return string(e)
+}
+
+func (e *Affordability) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = Affordability(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid Affordability", str)
+	}
+	return nil
+}
+
+func (e Affordability) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type CuisineType string
+
+const (
+	CuisineTypeAmerican CuisineType = "AMERICAN"
+	CuisineTypeAsian    CuisineType = "ASIAN"
+	CuisineTypeEuropean CuisineType = "EUROPEAN"
+)
+
+var AllCuisineType = []CuisineType{
+	CuisineTypeAmerican,
+	CuisineTypeAsian,
+	CuisineTypeEuropean,
+}
+
+func (e CuisineType) IsValid() bool {
+	switch e {
+	case CuisineTypeAmerican, CuisineTypeAsian, CuisineTypeEuropean:
+		return true
+	}
+	return false
+}
+
+func (e CuisineType) String() string {
+	return string(e)
+}
+
+func (e *CuisineType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CuisineType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CuisineType", str)
+	}
+	return nil
+}
+
+func (e CuisineType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
 type ErrorCode string

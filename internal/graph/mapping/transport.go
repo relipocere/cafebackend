@@ -32,3 +32,31 @@ func mapUserKind(kind model.UserKind) (graphmodel.UserKindEnum, error) {
 
 	return "", fmt.Errorf("unkown user kind: %s", kind)
 }
+
+// MapAffordability maps affordability to gql entity Affordability.
+func MapAffordability(affordability model.Affordability) graphmodel.Affordability {
+	switch affordability {
+	case model.AffordabilityCheap:
+		return graphmodel.AffordabilityCheap
+	case model.AffordabilityAffordable:
+		return graphmodel.AffordabilityAffordable
+	case model.AffordabilityExpensive:
+		return graphmodel.AffordabilityExpensive
+	}
+
+	return graphmodel.Affordability(string(affordability))
+}
+
+// MapCuisine maps cuisine type to gql entity.
+func MapCuisine(cuisine model.Cuisine) graphmodel.CuisineType {
+	switch cuisine {
+	case model.CuisineAmerican:
+		return graphmodel.CuisineTypeAmerican
+	case model.CuisineAsian:
+		return graphmodel.CuisineTypeAsian
+	case model.CuisineEuropean:
+		return graphmodel.CuisineTypeEuropean
+	}
+
+	return graphmodel.CuisineType(string(cuisine))
+}

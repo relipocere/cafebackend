@@ -60,17 +60,12 @@ func (a *App) GetAuthToken(
 }
 
 func (a *App) Me(ctx context.Context) (graphmodel.User, error) {
-	userVal := ctx.Value("user")
-	if userVal == nil {
-		return graphmodel.User{}, nil
+	user, ok := ctx.Value("user").(model.User)
+	if !ok {
+		return graphmodel.User{}, fmt.Errorf("no user in the context")
 	}
 
-	user, ok := userVal.(*model.User)
-	if !ok || user == nil {
-		return graphmodel.User{}, nil
-	}
-
-	resp, err := mapping.MapUser(*user)
+	resp, err := mapping.MapUser(user)
 	if err != nil {
 		return graphmodel.User{}, fmt.Errorf("mapping user: %w", err)
 	}
