@@ -26,7 +26,7 @@ func AuthenticationMW(q database.Queryable, userGetter userGetter) gin.HandlerFu
 		}
 
 		if user != nil {
-			ctx := context.WithValue(c.Request.Context(), "user", user)
+			ctx := context.WithValue(c.Request.Context(), "user", *user)
 			c.Request = c.Request.WithContext(ctx)
 		}
 

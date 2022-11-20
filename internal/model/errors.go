@@ -36,6 +36,11 @@ func ErrMessageMissingFieldRequired(field string) string {
 	return fmt.Sprintf("Field '%s' is required but not provided", field)
 }
 
+// ErrMessageSurpassedMaxLength is the generic "field is not provided" message.
+func ErrMessageMaxLengthExceeded(field string, length int64) string {
+	return fmt.Sprintf("Field '%s' exceeds maximum limit of %d characters", field, length)
+}
+
 // ErrMessageUnauthenticated is the generic "unauthenticated" message.
 func ErrMessageUnauthenticated() string {
 	return "Unauthenticated"

@@ -3,10 +3,12 @@ package graph
 import (
 	"context"
 
+	storehandler "github.com/relipocere/cafebackend/internal/business/store-handler"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
 	"github.com/relipocere/cafebackend/internal/graph/directive"
 	"github.com/relipocere/cafebackend/internal/graph/generated"
 	graphmodel "github.com/relipocere/cafebackend/internal/graph/graph-model"
+	"github.com/relipocere/cafebackend/internal/graph/store"
 	"github.com/relipocere/cafebackend/internal/graph/user"
 )
 
@@ -15,16 +17,23 @@ type userHandler interface {
 	LogIn(ctx context.Context, req userhandler.LogInRequest) (userhandler.LogInResponse, error)
 }
 
+type storeHandler interface {
+	CreateStore(ctx context.Context, req storehandler.CreateStoreRequest) (storehandler.CreateStoreResponse, error)
+}
+
 func NewResolver(
 	userHandler userHandler,
+	storeHandler storeHandler,
 ) generated.Config {
 	userApp := user.NewApp(userHandler)
+	storeApp := store.NewApp(storeHandler)
 	directiveApp := directive.NewApp()
 
 	cfg := generated.Config{
 		Resolvers: &Resolver{
 			mutationResolver: &mutationResolver{
-				user: userApp,
+				user:  userApp,
+				store: storeApp,
 			},
 
 			queryResolver: &queryResolver{
@@ -43,7 +52,8 @@ type Resolver struct {
 }
 
 type mutationResolver struct {
-	user *user.App
+	user  *user.App
+	store *store.App
 }
 
 type queryResolver struct {
@@ -60,6 +70,10 @@ func (r *Resolver) Query() generated.QueryResolver {
 
 func (m *mutationResolver) CreateUser(ctx context.Context, input graphmodel.CreateUserInput) (bool, error) {
 	return m.user.CreateUser(ctx, input)
+}
+
+func (m *mutationResolver) CreateStore(ctx context.Context, input graphmodel.CreateStoreInput) (graphmodel.Store, error) {
+	return m.store.CreateStore(ctx, input)
 }
 
 func (q *queryResolver) GetAuthToken(

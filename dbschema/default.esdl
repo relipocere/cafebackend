@@ -57,7 +57,9 @@ module default {
 
     type Product{
         required property name -> str;
-        required link store -> Store;
+        required link store -> Store{
+            on target delete delete source;
+        }
         property ingredients -> array<str>;
         required property calories -> int64;
         required property image_id -> str;

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/relipocere/cafebackend/internal/business/validation"
 	"github.com/relipocere/cafebackend/internal/model"
 	"github.com/relipocere/cafebackend/internal/service/security"
 )
@@ -73,6 +74,11 @@ func validateCreateUserRequest(req CreateUserRequest) error {
 			Message: fmt.Sprintf("Invalid account kind: %s", string(req.Kind)),
 			Code:    model.ErrorCodeBadRequest,
 		}
+	}
+
+	err := validation.ValidateUsername(req.Username)
+	if err != nil {
+		return err
 	}
 
 	return nil

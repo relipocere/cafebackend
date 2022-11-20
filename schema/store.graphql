@@ -1,0 +1,28 @@
+input CreateStoreInput{
+    title: String!
+    affordability: Affordability!
+    cuisineType: CuisineType!
+    imageID: String!
+}
+
+enum Affordability{
+    CHEAP
+    AFFORDABLE
+    EXPENSIVE
+}
+
+enum CuisineType{
+    AMERICAN
+    ASIAN
+    EUROPEAN
+}
+
+type Store{
+    id: String!
+    title: String!
+    affordability: Affordability!
+    cuisineType: CuisineType!
+    imageID: String!
+    createdAt: Time!
+    updatedAt: Time!
+}
