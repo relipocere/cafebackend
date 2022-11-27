@@ -53,6 +53,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreateStore func(childComplexity int, input graphmodel.CreateStoreInput) int
 		CreateUser  func(childComplexity int, input graphmodel.CreateUserInput) int
+		DeleteStore func(childComplexity int, input graphmodel.DeleteStoreInput) int
 	}
 
 	Query struct {
@@ -81,6 +82,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateUser(ctx context.Context, input graphmodel.CreateUserInput) (bool, error)
 	CreateStore(ctx context.Context, input graphmodel.CreateStoreInput) (graphmodel.Store, error)
+	DeleteStore(ctx context.Context, input graphmodel.DeleteStoreInput) (bool, error)
 }
 type QueryResolver interface {
 	GetAuthToken(ctx context.Context, input graphmodel.GetAuthTokenInput) (graphmodel.GetAuthTokenPayload, error)
@@ -132,6 +134,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(graphmodel.CreateUserInput)), true
+
+	case "Mutation.deleteStore":
+		if e.complexity.Mutation.DeleteStore == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteStore_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteStore(childComplexity, args["input"].(graphmodel.DeleteStoreInput)), true
 
 	case "Query.getAuthToken":
 		if e.complexity.Query.GetAuthToken == nil {
@@ -239,6 +253,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCreateStoreInput,
 		ec.unmarshalInputCreateUserInput,
+		ec.unmarshalInputDeleteStoreInput,
 		ec.unmarshalInputGetAuthTokenInput,
 	)
 	first := true
@@ -311,6 +326,7 @@ var sources = []*ast.Source{
 	{Name: "../../../schema/schema.graphql", Input: `type Mutation{
     createUser(input: CreateUserInput!): Boolean!
     createStore(input: CreateStoreInput!): Store! @isAuthenticated
+	deleteStore(input: DeleteStoreInput!): Boolean! @isAuthenticated
 }
 
 type Query{
@@ -323,7 +339,8 @@ scalar Upload
 
 directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
-directive @isAuthenticated on FIELD_DEFINITION`, BuiltIn: false},
+directive @isAuthenticated on FIELD_DEFINITION
+`, BuiltIn: false},
 	{Name: "../../../schema/store.graphql", Input: `input CreateStoreInput{
     title: String!
     affordability: Affordability!
@@ -351,7 +368,12 @@ type Store{
     imageID: String!
     createdAt: Time!
     updatedAt: Time!
-}`, BuiltIn: false},
+}
+
+input DeleteStoreInput{
+	id: String!
+}
+`, BuiltIn: false},
 	{Name: "../../../schema/user.graphql", Input: `enum UserKindEnum{
     CONSUMER
     BUSINESS
@@ -408,6 +430,21 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNCreateUserInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCreateUserInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteStore_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 graphmodel.DeleteStoreInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNDeleteStoreInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐDeleteStoreInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -668,6 +705,81 @@ func (ec *executionContext) fieldContext_Mutation_createStore(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createStore_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteStore(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteStore(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteStore(rctx, fc.Args["input"].(graphmodel.DeleteStoreInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsAuthenticated == nil {
+				return nil, errors.New("directive isAuthenticated is not implemented")
+			}
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteStore(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteStore_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -3297,6 +3409,34 @@ func (ec *executionContext) unmarshalInputCreateUserInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteStoreInput(ctx context.Context, obj interface{}) (graphmodel.DeleteStoreInput, error) {
+	var it graphmodel.DeleteStoreInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputGetAuthTokenInput(ctx context.Context, obj interface{}) (graphmodel.GetAuthTokenInput, error) {
 	var it graphmodel.GetAuthTokenInput
 	asMap := map[string]interface{}{}
@@ -3401,6 +3541,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createStore(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteStore":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteStore(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {
@@ -3985,6 +4134,11 @@ func (ec *executionContext) unmarshalNCuisineType2githubᚗcomᚋrelipocereᚋca
 
 func (ec *executionContext) marshalNCuisineType2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCuisineType(ctx context.Context, sel ast.SelectionSet, v graphmodel.CuisineType) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) unmarshalNDeleteStoreInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐDeleteStoreInput(ctx context.Context, v interface{}) (graphmodel.DeleteStoreInput, error) {
+	res, err := ec.unmarshalInputDeleteStoreInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNGetAuthTokenInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐGetAuthTokenInput(ctx context.Context, v interface{}) (graphmodel.GetAuthTokenInput, error) {

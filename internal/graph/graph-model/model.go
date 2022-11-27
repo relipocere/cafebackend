@@ -23,6 +23,10 @@ type CreateUserInput struct {
 	FullName string       `json:"fullName"`
 }
 
+type DeleteStoreInput struct {
+	ID string `json:"id"`
+}
+
 type GetAuthTokenInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`

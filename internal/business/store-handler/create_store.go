@@ -61,7 +61,7 @@ func (h *Handler) CreateStore(ctx context.Context, req CreateStoreRequest) (Crea
 func validateCreateStoreRequest(req CreateStoreRequest, user model.User) error {
 	if user.Kind != model.UserKindBusiness {
 		return model.Error{
-			Message: fmt.Sprintf("User have account of type 'Business' to create a store"),
+			Message: "User have account of type 'Business' to create a store",
 			Code:    model.ErrorCodeFailedPrecondition,
 		}
 	}

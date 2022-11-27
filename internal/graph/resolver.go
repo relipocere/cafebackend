@@ -19,6 +19,7 @@ type userHandler interface {
 
 type storeHandler interface {
 	CreateStore(ctx context.Context, req storehandler.CreateStoreRequest) (storehandler.CreateStoreResponse, error)
+	DeleteStore(ctx context.Context, req storehandler.DeleteStoreRequest) error
 }
 
 func NewResolver(
@@ -74,6 +75,10 @@ func (m *mutationResolver) CreateUser(ctx context.Context, input graphmodel.Crea
 
 func (m *mutationResolver) CreateStore(ctx context.Context, input graphmodel.CreateStoreInput) (graphmodel.Store, error) {
 	return m.store.CreateStore(ctx, input)
+}
+
+func (m *mutationResolver) DeleteStore(ctx context.Context, input graphmodel.DeleteStoreInput) (bool, error) {
+	return m.store.DeleteStore(ctx, input)
 }
 
 func (q *queryResolver) GetAuthToken(

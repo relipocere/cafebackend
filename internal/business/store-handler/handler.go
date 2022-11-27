@@ -10,6 +10,8 @@ import (
 
 type storeRepo interface {
 	Create(ctx context.Context, q database.Queryable, store model.StoreCreate) (string, error)
+	Delete(ctx context.Context, q database.Queryable, ids []string) error
+	Get(ctx context.Context, q database.Queryable, id string) (*model.Store, error)
 }
 
 // Handler handles user related scenarios.
