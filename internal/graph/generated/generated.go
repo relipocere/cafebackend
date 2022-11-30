@@ -63,10 +63,12 @@ type ComplexityRoot struct {
 
 	Store struct {
 		Affordability func(childComplexity int) int
+		AverageRating func(childComplexity int) int
 		CreatedAt     func(childComplexity int) int
 		CuisineType   func(childComplexity int) int
 		ID            func(childComplexity int) int
 		ImageID       func(childComplexity int) int
+		OwnerUsername func(childComplexity int) int
 		Title         func(childComplexity int) int
 		UpdatedAt     func(childComplexity int) int
 	}
@@ -74,7 +76,6 @@ type ComplexityRoot struct {
 	User struct {
 		FullName func(childComplexity int) int
 		Kind     func(childComplexity int) int
-		UUID     func(childComplexity int) int
 		Username func(childComplexity int) int
 	}
 }
@@ -173,6 +174,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Store.Affordability(childComplexity), true
 
+	case "Store.averageRating":
+		if e.complexity.Store.AverageRating == nil {
+			break
+		}
+
+		return e.complexity.Store.AverageRating(childComplexity), true
+
 	case "Store.createdAt":
 		if e.complexity.Store.CreatedAt == nil {
 			break
@@ -201,6 +209,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Store.ImageID(childComplexity), true
 
+	case "Store.ownerUsername":
+		if e.complexity.Store.OwnerUsername == nil {
+			break
+		}
+
+		return e.complexity.Store.OwnerUsername(childComplexity), true
+
 	case "Store.title":
 		if e.complexity.Store.Title == nil {
 			break
@@ -228,13 +243,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Kind(childComplexity), true
-
-	case "User.uuid":
-		if e.complexity.User.UUID == nil {
-			break
-		}
-
-		return e.complexity.User.UUID(childComplexity), true
 
 	case "User.username":
 		if e.complexity.User.Username == nil {
@@ -361,17 +369,19 @@ enum CuisineType{
 }
 
 type Store{
-    id: String!
+    id: Int!
     title: String!
     affordability: Affordability!
     cuisineType: CuisineType!
+	ownerUsername: String!
     imageID: String!
+	averageRating: Int!
     createdAt: Time!
     updatedAt: Time!
 }
 
 input DeleteStoreInput{
-	id: String!
+	id: Int!
 }
 `, BuiltIn: false},
 	{Name: "../../../schema/user.graphql", Input: `enum UserKindEnum{
@@ -396,11 +406,11 @@ type GetAuthTokenPayload{
 }
 
 type User{
-    uuid: String!
     username: String!
     kind: UserKindEnum!
     fullName: String!
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
@@ -687,8 +697,12 @@ func (ec *executionContext) fieldContext_Mutation_createStore(ctx context.Contex
 				return ec.fieldContext_Store_affordability(ctx, field)
 			case "cuisineType":
 				return ec.fieldContext_Store_cuisineType(ctx, field)
+			case "ownerUsername":
+				return ec.fieldContext_Store_ownerUsername(ctx, field)
 			case "imageID":
 				return ec.fieldContext_Store_imageID(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_Store_averageRating(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Store_createdAt(ctx, field)
 			case "updatedAt":
@@ -904,8 +918,6 @@ func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field gra
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "uuid":
-				return ec.fieldContext_User_uuid(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
 			case "kind":
@@ -1074,9 +1086,9 @@ func (ec *executionContext) _Store_id(ctx context.Context, field graphql.Collect
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Store_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1086,7 +1098,7 @@ func (ec *executionContext) fieldContext_Store_id(ctx context.Context, field gra
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1224,6 +1236,50 @@ func (ec *executionContext) fieldContext_Store_cuisineType(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Store_ownerUsername(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Store) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Store_ownerUsername(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.OwnerUsername, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Store_ownerUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Store",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Store_imageID(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Store) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Store_imageID(ctx, field)
 	if err != nil {
@@ -1263,6 +1319,50 @@ func (ec *executionContext) fieldContext_Store_imageID(ctx context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Store_averageRating(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Store) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Store_averageRating(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AverageRating, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Store_averageRating(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Store",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
 		},
 	}
 	return fc, nil
@@ -1351,50 +1451,6 @@ func (ec *executionContext) fieldContext_Store_updatedAt(ctx context.Context, fi
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_uuid(ctx context.Context, field graphql.CollectedField, obj *graphmodel.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_uuid(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UUID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_User_uuid(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3427,7 +3483,7 @@ func (ec *executionContext) unmarshalInputDeleteStoreInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-			it.ID, err = ec.unmarshalNString2string(ctx, v)
+			it.ID, err = ec.unmarshalNInt2int64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3692,9 +3748,23 @@ func (ec *executionContext) _Store(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "ownerUsername":
+
+			out.Values[i] = ec._Store_ownerUsername(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "imageID":
 
 			out.Values[i] = ec._Store_imageID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "averageRating":
+
+			out.Values[i] = ec._Store_averageRating(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -3734,13 +3804,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("User")
-		case "uuid":
-
-			out.Values[i] = ec._User_uuid(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "username":
 
 			out.Values[i] = ec._User_username(ctx, field, obj)
@@ -4148,6 +4211,21 @@ func (ec *executionContext) unmarshalNGetAuthTokenInput2githubᚗcomᚋrelipocer
 
 func (ec *executionContext) marshalNGetAuthTokenPayload2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐGetAuthTokenPayload(ctx context.Context, sel ast.SelectionSet, v graphmodel.GetAuthTokenPayload) graphql.Marshaler {
 	return ec._GetAuthTokenPayload(ctx, sel, &v)
+}
+
+func (ec *executionContext) unmarshalNInt2int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
 }
 
 func (ec *executionContext) marshalNStore2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐStore(ctx context.Context, sel ast.SelectionSet, v graphmodel.Store) graphql.Marshaler {

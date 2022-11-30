@@ -9,22 +9,23 @@ import (
 )
 
 type storeRepo interface {
-	Create(ctx context.Context, q database.Queryable, store model.StoreCreate) (string, error)
-	Delete(ctx context.Context, q database.Queryable, ids []string) error
-	Get(ctx context.Context, q database.Queryable, id string) (*model.Store, error)
+	Create(ctx context.Context, q database.Queryable, store model.StoreCreate) (int64, error)
+	Get(ctx context.Context, q database.Queryable, ids []int64) ([]model.Store, error)
+	Search(ctx context.Context, q database.Queryable, page model.Pagination, filter model.StoreFilter) ([]model.Store, error)
+	Delete(ctx context.Context, q database.Queryable, ids []int64) error
 }
 
 // Handler handles user related scenarios.
 type Handler struct {
-	edge      database.Edge
+	db        database.PGX
 	storeRepo storeRepo
 	now       func() time.Time
 }
 
 // NewHandler creates new Handler.
-func NewHandler(edge database.Edge, storeRepo storeRepo) *Handler {
+func NewHandler(db database.PGX, storeRepo storeRepo) *Handler {
 	return &Handler{
-		edge:      edge,
+		db:        db,
 		storeRepo: storeRepo,
 		now:       func() time.Time { return time.Now().UTC() },
 	}

@@ -22,14 +22,8 @@ func (k UserKind) IsValid() bool {
 	return ok
 }
 
-// User is the user-handler model.
+// User is struct representing user.
 type User struct {
-	ID string
-	UserCreate
-}
-
-// UserCreate is the struct for user-handler creation.
-type UserCreate struct {
 	Username     string
 	FullName     string
 	Kind         UserKind
@@ -37,4 +31,11 @@ type UserCreate struct {
 	Salt         string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	Session      *Session
+}
+
+// Session user authentication session.
+type Session struct {
+	ID        string
+	ExpiresAt time.Time
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/relipocere/cafebackend/internal/auth"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
 	graphmodel "github.com/relipocere/cafebackend/internal/graph/graph-model"
 	"github.com/relipocere/cafebackend/internal/graph/mapping"
@@ -60,7 +61,7 @@ func (a *App) GetAuthToken(
 }
 
 func (a *App) Me(ctx context.Context) (graphmodel.User, error) {
-	user, ok := ctx.Value("user").(model.User)
+	user, ok := ctx.Value(auth.User).(model.User)
 	if !ok {
 		return graphmodel.User{}, fmt.Errorf("no user in the context")
 	}

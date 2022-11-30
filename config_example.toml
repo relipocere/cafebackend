@@ -1,7 +1,7 @@
 # fill the values and rename file to config.toml
-[edgedb]
+[psql]
 host=""
-port="5656"
+port="5432"
 user=""
 password=""
 database=""

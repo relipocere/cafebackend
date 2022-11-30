@@ -15,7 +15,6 @@ func MapUser(user model.User) (graphmodel.User, error) {
 	}
 
 	return graphmodel.User{
-		UUID:     user.ID,
 		Username: user.Username,
 		Kind:     kind,
 		FullName: user.FullName,
@@ -30,7 +29,22 @@ func mapUserKind(kind model.UserKind) (graphmodel.UserKindEnum, error) {
 		return graphmodel.UserKindEnumConsumer, nil
 	}
 
-	return "", fmt.Errorf("unkown user kind: %s", kind)
+	return "", fmt.Errorf("unknown user kind: %s", kind)
+}
+
+// MapStore maps store to gql entity Store.
+func MapStore(s model.Store) graphmodel.Store {
+	return graphmodel.Store{
+		ID:            s.ID,
+		Title:         s.Title,
+		Affordability: MapAffordability(s.Affordability),
+		CuisineType:   MapCuisine(s.Cuisine),
+		OwnerUsername: s.OwnerUsername,
+		ImageID:       s.ImageID,
+		AverageRating: s.AverageRating,
+		CreatedAt:     s.CreatedAt,
+		UpdatedAt:     s.UpdatedAt,
+	}
 }
 
 // MapAffordability maps affordability to gql entity Affordability.

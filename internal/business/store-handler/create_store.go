@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/relipocere/cafebackend/internal/auth"
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
@@ -25,7 +26,7 @@ func (h *Handler) CreateStore(ctx context.Context, req CreateStoreRequest) (Crea
 	resp := CreateStoreResponse{}
 
 	now := h.now()
-	user, ok := ctx.Value("user").(model.User)
+	user, ok := ctx.Value(auth.User).(model.User)
 	if !ok {
 		return resp, fmt.Errorf("no user in the context")
 	}
@@ -36,16 +37,18 @@ func (h *Handler) CreateStore(ctx context.Context, req CreateStoreRequest) (Crea
 	}
 
 	storeCreate := model.StoreCreate{
-		Title:         req.Title,
-		Affordability: req.Affordability,
-		Cuisine:       req.Cuisine,
-		OwnerUsername: user.Username,
-		ImageID:       req.ImageID,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		Title:           req.Title,
+		Affordability:   req.Affordability,
+		Cuisine:         req.Cuisine,
+		OwnerUsername:   user.Username,
+		ImageID:         req.ImageID,
+		AverageRating:   0,
+		NumberOfReviews: 0,
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 
-	storeID, err := h.storeRepo.Create(ctx, h.edge, storeCreate)
+	storeID, err := h.storeRepo.Create(ctx, h.db, storeCreate)
 	if err != nil {
 		return resp, fmt.Errorf("store creation: %w", err)
 	}

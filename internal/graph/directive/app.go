@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/relipocere/cafebackend/internal/auth"
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
@@ -24,7 +25,7 @@ func (a *App) IsAuthenticated(ctx context.Context, obj interface{}, next graphql
 	}
 
 	// if can't cast to user or no value is present
-	_, ok := ctx.Value("user").(model.User)
+	_, ok := ctx.Value(auth.User).(model.User)
 	if !ok {
 		return nil, unauthenticatedErr
 	}

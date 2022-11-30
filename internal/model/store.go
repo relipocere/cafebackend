@@ -48,17 +48,27 @@ func (c Cuisine) IsValid() bool {
 
 // Store is the restaurant/cafe.
 type Store struct {
-	ID string
+	ID int64
 	StoreCreate
 }
 
 // Store the struct for the store creation.
 type StoreCreate struct {
-	Title         string
-	Affordability Affordability
-	Cuisine       Cuisine
-	OwnerUsername string
-	ImageID       string
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	Title           string
+	Affordability   Affordability
+	Cuisine         Cuisine
+	OwnerUsername   string
+	ImageID         string
+	AverageRating   int64
+	NumberOfReviews int64
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+type StoreFilter struct {
+	TitleQuery     *string
+	AverageRating  *IntRange
+	OwnerUsernames []string
+	Affordability  []Affordability
+	Cuisines       []Cuisine
 }

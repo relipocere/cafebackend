@@ -31,15 +31,5 @@ func mapCreateStoreRequest(input graphmodel.CreateStoreInput) storehandler.Creat
 }
 
 func mapCreateStoreResponse(response storehandler.CreateStoreResponse) graphmodel.Store {
-	store := response.Store
-
-	return graphmodel.Store{
-		ID:            store.ID,
-		Title:         store.Title,
-		Affordability: mapping.MapAffordability(store.Affordability),
-		CuisineType:   mapping.MapCuisine(store.Cuisine),
-		ImageID:       store.ImageID,
-		CreatedAt:     store.CreatedAt,
-		UpdatedAt:     store.UpdatedAt,
-	}
+	return mapping.MapStore(response.Store)
 }

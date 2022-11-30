@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/relipocere/cafebackend/internal/auth"
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
 // DeleteStoreRequest id of the store to delete.
 type DeleteStoreRequest struct {
-	StoreID string
+	StoreID int64
 }
 
 // DeleteStore deletes the store.
 func (h *Handler) DeleteStore(ctx context.Context, req DeleteStoreRequest) error {
-	user, ok := ctx.Value("user").(model.User)
+	user, ok := ctx.Value(auth.User).(model.User)
 	if !ok {
 		return fmt.Errorf("no user in the context")
 	}
@@ -24,39 +25,46 @@ func (h *Handler) DeleteStore(ctx context.Context, req DeleteStoreRequest) error
 		return fmt.Errorf("request validation: %w", err)
 	}
 
-	store, err := h.storeRepo.Get(ctx, h.edge, req.StoreID)
+	stores, err := h.storeRepo.Get(ctx, h.db, []int64{req.StoreID})
 	if err != nil {
-		return fmt.Errorf("get store %s: %w", req.StoreID, err)
+		return fmt.Errorf("get store %d: %w", req.StoreID, err)
 	}
 
-	if store == nil {
+	if len(stores) == 0 {
 		return model.Error{
 			Code:    model.ErrorCodeFailedPrecondition,
-			Message: fmt.Sprintf("Store with id %s doesn't exist", req.StoreID),
+			Message: fmt.Sprintf("Store with id %d doesn't exist", req.StoreID),
 		}
 	}
+	store := stores[0]
 
 	if store.OwnerUsername != user.Username {
 		return model.Error{
 			Code:    model.ErrorCodeFailedPrecondition,
-			Message: "You're not the owner of the store",
+			Message: "Only owner of the store can delete it",
 		}
 	}
 
-	// no tx here
-	err = h.storeRepo.Delete(ctx, h.edge, []string{req.StoreID})
+	err = h.storeRepo.Delete(ctx, h.db, []int64{store.ID})
 	if err != nil {
-		return fmt.Errorf("delete store %s: %w", req.StoreID, err)
+		return fmt.Errorf("delete store %d: %w", req.StoreID, err)
 	}
 
 	return nil
 }
 
 func validateDeleteStoreRequest(req DeleteStoreRequest) error {
-	if req.StoreID == "" {
+	if req.StoreID == 0 {
 		return model.Error{
 			Code:    model.ErrorCodeBadRequest,
-			Message: model.ErrMessageMissingFieldRequired("Store id"),
+			Message: model.ErrMessageMissingFieldRequired("Store ID"),
+		}
+	}
+
+	if req.StoreID < 0 {
+		return model.Error{
+			Code:    model.ErrorCodeBadRequest,
+			Message: model.ErrMessageInvalidID("Store ID", req.StoreID),
 		}
 	}
 

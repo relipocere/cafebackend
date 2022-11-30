@@ -4,16 +4,19 @@ import (
 	"context"
 	"fmt"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/relipocere/cafebackend/internal/database"
 )
 
 // Delete deletes stores by ids.
-func (r *Repo) Delete(ctx context.Context, q database.Queryable, ids []string) error {
-	query := `delete Store filter .id=array<uuid>$0`
+func (r *Repo) Delete(ctx context.Context, q database.Queryable, ids []int64) error {
+	qb := database.PSQL.
+		Delete(database.TableStore).
+		Where(sq.Eq{"id": ids})
 
-	err := q.Execute(ctx, query, ids)
+	_, err := q.Exec(ctx, qb)
 	if err != nil {
-		return fmt.Errorf("delete: %w", err)
+		return fmt.Errorf("exec delete: %w", err)
 	}
 
 	return nil
