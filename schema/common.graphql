@@ -1,0 +1,11 @@
+input IntRange{
+	start: Int
+	end: Int
+	endExclusive: Boolean! = false
+	startExclusive: Boolean! = false
+}
+
+input Pagination{
+	page: Int!
+	limit: Int!
+}

@@ -6,20 +6,30 @@ import (
 )
 
 // MapToUserKind maps to business entity UserKind.
-func MapToUserKind(userKind graphmodel.UserKindEnum) model.UserKind {
-	switch userKind {
+func MapToUserKind(k graphmodel.UserKindEnum) model.UserKind {
+	switch k {
 	case graphmodel.UserKindEnumBusiness:
 		return model.UserKindBusiness
 	case graphmodel.UserKindEnumConsumer:
 		return model.UserKindConsumer
 	}
 
-	return model.UserKind(userKind.String())
+	return model.UserKind(k.String())
+}
+
+func MapToAffordabilitySlice(aa []graphmodel.Affordability) []model.Affordability {
+	var affordability []model.Affordability
+
+	for _, a := range aa {
+		affordability = append(affordability, MapToAffordability(a))
+	}
+
+	return affordability
 }
 
 // MapToAffordability maps affordability to business entity Affordability.
-func MapToAffordability(affordability graphmodel.Affordability) model.Affordability {
-	switch affordability {
+func MapToAffordability(a graphmodel.Affordability) model.Affordability {
+	switch a {
 	case graphmodel.AffordabilityCheap:
 		return model.AffordabilityCheap
 	case graphmodel.AffordabilityAffordable:
@@ -28,12 +38,22 @@ func MapToAffordability(affordability graphmodel.Affordability) model.Affordabil
 		return model.AffordabilityExpensive
 	}
 
-	return model.Affordability(affordability.String())
+	return model.Affordability(a.String())
+}
+
+func MapToCuisines(cc []graphmodel.CuisineType ) []model.Cuisine{
+	var cuisines []model.Cuisine
+
+	for _, c := range cc {
+		cuisines = append(cuisines, MapToCuisine(c))
+	}
+
+	return cuisines 
 }
 
 // MapToCuisine maps cuisine type to business entity.
-func MapToCuisine(cuisine graphmodel.CuisineType) model.Cuisine {
-	switch cuisine {
+func MapToCuisine(c graphmodel.CuisineType) model.Cuisine {
+	switch c {
 	case graphmodel.CuisineTypeAmerican:
 		return model.CuisineAmerican
 	case graphmodel.CuisineTypeAsian:
@@ -42,5 +62,25 @@ func MapToCuisine(cuisine graphmodel.CuisineType) model.Cuisine {
 		return model.CuisineEuropean
 	}
 
-	return model.Cuisine(cuisine.String())
+	return model.Cuisine(c.String())
+}
+
+func MapToPagination(p graphmodel.Pagination) model.Pagination {
+	return model.Pagination{
+		Page:         p.Page,
+		ItemsPerPage: p.Limit,
+	}
+}
+
+func MapToIntRange(r *graphmodel.IntRange) *model.IntRange {
+	if r == nil{
+		return nil
+	}
+
+	return &model.IntRange{
+		Start:          r.Start,
+		End:            r.End,
+		StartExclusive: r.StartExclusive,
+		EndExclusive:   r.EndExclusive,
+	}
 }

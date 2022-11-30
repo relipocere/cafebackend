@@ -10,6 +10,7 @@ import (
 	graphmodel "github.com/relipocere/cafebackend/internal/graph/graph-model"
 	"github.com/relipocere/cafebackend/internal/graph/store"
 	"github.com/relipocere/cafebackend/internal/graph/user"
+	"github.com/relipocere/cafebackend/internal/model"
 )
 
 type userHandler interface {
@@ -20,6 +21,7 @@ type userHandler interface {
 type storeHandler interface {
 	CreateStore(ctx context.Context, req storehandler.CreateStoreRequest) (storehandler.CreateStoreResponse, error)
 	DeleteStore(ctx context.Context, req storehandler.DeleteStoreRequest) error
+	SearchStores(ctx context.Context, req storehandler.SearchStoresRequest) ([]model.Store, error)
 }
 
 func NewResolver(
@@ -38,7 +40,8 @@ func NewResolver(
 			},
 
 			queryResolver: &queryResolver{
-				user: userApp,
+				user:  userApp,
+				store: storeApp,
 			},
 		},
 	}
@@ -58,7 +61,8 @@ type mutationResolver struct {
 }
 
 type queryResolver struct {
-	user *user.App
+	user  *user.App
+	store *store.App
 }
 
 func (r *Resolver) Mutation() generated.MutationResolver {
@@ -90,4 +94,8 @@ func (q *queryResolver) GetAuthToken(
 
 func (q *queryResolver) Me(ctx context.Context) (graphmodel.User, error) {
 	return q.user.Me(ctx)
+}
+
+func (q *queryResolver) SearchStores(ctx context.Context, input graphmodel.SearchStoresInput) ([]graphmodel.Store, error) {
+	return q.store.SearchStores(ctx, input)
 }

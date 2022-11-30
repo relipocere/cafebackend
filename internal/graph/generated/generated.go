@@ -59,6 +59,7 @@ type ComplexityRoot struct {
 	Query struct {
 		GetAuthToken func(childComplexity int, input graphmodel.GetAuthTokenInput) int
 		Me           func(childComplexity int) int
+		SearchStores func(childComplexity int, input graphmodel.SearchStoresInput) int
 	}
 
 	Store struct {
@@ -88,6 +89,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	GetAuthToken(ctx context.Context, input graphmodel.GetAuthTokenInput) (graphmodel.GetAuthTokenPayload, error)
 	Me(ctx context.Context) (graphmodel.User, error)
+	SearchStores(ctx context.Context, input graphmodel.SearchStoresInput) ([]graphmodel.Store, error)
 }
 
 type executableSchema struct {
@@ -166,6 +168,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Me(childComplexity), true
+
+	case "Query.searchStores":
+		if e.complexity.Query.SearchStores == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchStores_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchStores(childComplexity, args["input"].(graphmodel.SearchStoresInput)), true
 
 	case "Store.affordability":
 		if e.complexity.Store.Affordability == nil {
@@ -263,6 +277,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputDeleteStoreInput,
 		ec.unmarshalInputGetAuthTokenInput,
+		ec.unmarshalInputIntRange,
+		ec.unmarshalInputPagination,
+		ec.unmarshalInputSearchStoresInput,
 	)
 	first := true
 
@@ -323,6 +340,18 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
+	{Name: "../../../schema/common.graphql", Input: `input IntRange{
+	start: Int
+	end: Int
+	endExclusive: Boolean! = false
+	startExclusive: Boolean! = false
+}
+
+input Pagination{
+	page: Int!
+	limit: Int!
+}
+`, BuiltIn: false},
 	{Name: "../../../schema/error_code.graphql", Input: `enum ErrorCode{
     INTERNAL
     UNAUTHENTICATED
@@ -340,6 +369,7 @@ var sources = []*ast.Source{
 type Query{
     getAuthToken(input: GetAuthTokenInput!): GetAuthTokenPayload!
     me: User! @isAuthenticated
+	searchStores(input: SearchStoresInput!): [Store!] @isAuthenticated
 }
 
 scalar Time
@@ -354,6 +384,15 @@ directive @isAuthenticated on FIELD_DEFINITION
     affordability: Affordability!
     cuisineType: CuisineType!
     imageID: String!
+}
+
+input SearchStoresInput{
+	page: Pagination!
+	titleQuery: String	
+	rating: IntRange
+	ownerUsernames: [String!]
+	affordability: [Affordability!]
+	cuisines: [CuisineType!]
 }
 
 enum Affordability{
@@ -485,6 +524,21 @@ func (ec *executionContext) field_Query_getAuthToken_args(ctx context.Context, r
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNGetAuthTokenInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐGetAuthTokenInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_searchStores_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 graphmodel.SearchStoresInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSearchStoresInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐSearchStoresInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -927,6 +981,98 @@ func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field gra
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_searchStores(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchStores(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().SearchStores(rctx, fc.Args["input"].(graphmodel.SearchStoresInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsAuthenticated == nil {
+				return nil, errors.New("directive isAuthenticated is not implemented")
+			}
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]graphmodel.Store); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []github.com/relipocere/cafebackend/internal/graph/graph-model.Store`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]graphmodel.Store)
+	fc.Result = res
+	return ec.marshalOStore2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐStoreᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_searchStores(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Store_id(ctx, field)
+			case "title":
+				return ec.fieldContext_Store_title(ctx, field)
+			case "affordability":
+				return ec.fieldContext_Store_affordability(ctx, field)
+			case "cuisineType":
+				return ec.fieldContext_Store_cuisineType(ctx, field)
+			case "ownerUsername":
+				return ec.fieldContext_Store_ownerUsername(ctx, field)
+			case "imageID":
+				return ec.fieldContext_Store_imageID(ctx, field)
+			case "averageRating":
+				return ec.fieldContext_Store_averageRating(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Store_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Store_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Store", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_searchStores_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -3529,6 +3675,169 @@ func (ec *executionContext) unmarshalInputGetAuthTokenInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputIntRange(ctx context.Context, obj interface{}) (graphmodel.IntRange, error) {
+	var it graphmodel.IntRange
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["endExclusive"]; !present {
+		asMap["endExclusive"] = false
+	}
+	if _, present := asMap["startExclusive"]; !present {
+		asMap["startExclusive"] = false
+	}
+
+	fieldsInOrder := [...]string{"start", "end", "endExclusive", "startExclusive"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "start":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("start"))
+			it.Start, err = ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "end":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("end"))
+			it.End, err = ec.unmarshalOInt2ᚖint64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "endExclusive":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endExclusive"))
+			it.EndExclusive, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "startExclusive":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startExclusive"))
+			it.StartExclusive, err = ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPagination(ctx context.Context, obj interface{}) (graphmodel.Pagination, error) {
+	var it graphmodel.Pagination
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"page", "limit"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "page":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+			it.Page, err = ec.unmarshalNInt2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "limit":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			it.Limit, err = ec.unmarshalNInt2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputSearchStoresInput(ctx context.Context, obj interface{}) (graphmodel.SearchStoresInput, error) {
+	var it graphmodel.SearchStoresInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"page", "titleQuery", "rating", "ownerUsernames", "affordability", "cuisines"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "page":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+			it.Page, err = ec.unmarshalNPagination2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐPagination(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "titleQuery":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("titleQuery"))
+			it.TitleQuery, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rating":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rating"))
+			it.Rating, err = ec.unmarshalOIntRange2ᚖgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐIntRange(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "ownerUsernames":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ownerUsernames"))
+			it.OwnerUsernames, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "affordability":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("affordability"))
+			it.Affordability, err = ec.unmarshalOAffordability2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐAffordabilityᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cuisines":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cuisines"))
+			it.Cuisines, err = ec.unmarshalOCuisineType2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCuisineTypeᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3677,6 +3986,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "searchStores":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_searchStores(ctx, field)
 				return res
 			}
 
@@ -4228,6 +4557,16 @@ func (ec *executionContext) marshalNInt2int64(ctx context.Context, sel ast.Selec
 	return res
 }
 
+func (ec *executionContext) unmarshalNPagination2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐPagination(ctx context.Context, v interface{}) (graphmodel.Pagination, error) {
+	res, err := ec.unmarshalInputPagination(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNSearchStoresInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐSearchStoresInput(ctx context.Context, v interface{}) (graphmodel.SearchStoresInput, error) {
+	res, err := ec.unmarshalInputSearchStoresInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNStore2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐStore(ctx context.Context, sel ast.SelectionSet, v graphmodel.Store) graphql.Marshaler {
 	return ec._Store(ctx, sel, &v)
 }
@@ -4529,6 +4868,73 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) unmarshalOAffordability2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐAffordabilityᚄ(ctx context.Context, v interface{}) ([]graphmodel.Affordability, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]graphmodel.Affordability, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNAffordability2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐAffordability(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOAffordability2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐAffordabilityᚄ(ctx context.Context, sel ast.SelectionSet, v []graphmodel.Affordability) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAffordability2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐAffordability(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -4553,6 +4959,182 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOCuisineType2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCuisineTypeᚄ(ctx context.Context, v interface{}) ([]graphmodel.CuisineType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]graphmodel.CuisineType, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNCuisineType2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCuisineType(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOCuisineType2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCuisineTypeᚄ(ctx context.Context, sel ast.SelectionSet, v []graphmodel.CuisineType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNCuisineType2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCuisineType(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOInt2ᚖint64(ctx context.Context, v interface{}) (*int64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt64(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint64(ctx context.Context, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOIntRange2ᚖgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐIntRange(ctx context.Context, v interface{}) (*graphmodel.IntRange, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputIntRange(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOStore2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐStoreᚄ(ctx context.Context, sel ast.SelectionSet, v []graphmodel.Store) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNStore2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐStore(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOString2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalNString2string(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel ast.SelectionSet, v []string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalNString2string(ctx, sel, v[i])
+	}
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

@@ -18,7 +18,7 @@ func (a *App) CreateStore(ctx context.Context, input graphmodel.CreateStoreInput
 		return graphmodel.Store{}, fmt.Errorf("business handler: %w", err)
 	}
 
-	return mapCreateStoreResponse(response), nil
+	return mapping.MapStore(response.Store), nil
 }
 
 func mapCreateStoreRequest(input graphmodel.CreateStoreInput) storehandler.CreateStoreRequest {
@@ -28,8 +28,4 @@ func mapCreateStoreRequest(input graphmodel.CreateStoreInput) storehandler.Creat
 		Cuisine:       mapping.MapToCuisine(input.CuisineType),
 		ImageID:       input.ImageID,
 	}
-}
-
-func mapCreateStoreResponse(response storehandler.CreateStoreResponse) graphmodel.Store {
-	return mapping.MapStore(response.Store)
 }
