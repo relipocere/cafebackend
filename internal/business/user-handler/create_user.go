@@ -31,7 +31,7 @@ func (h *Handler) CreateUser(ctx context.Context, req CreateUserRequest) error {
 	}
 	passwordHash := security.Hash(req.Password, salt)
 
-	_, err = h.userRepo.Create(ctx, h.edge, model.UserCreate{
+	_, err = h.userRepo.Create(ctx, h.db, model.User{
 		Username:     req.Username,
 		FullName:     req.FullName,
 		Kind:         req.Kind,

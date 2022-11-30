@@ -18,30 +18,37 @@ func NewRepo() *Repo {
 }
 
 // Create creates new store.
-func (*Repo) Create(ctx context.Context, q database.Queryable, store model.StoreCreate) (string, error) {
-	query := `insert Store{
-			title := <str>$0,
-			affordability := <Affordability>$1,
-			cuisine_type := <Cuisine>$2,
-			owner := (select User filter .username = <str>$3),
-			image_id := <str>$4, 
-			created_at := <datetime>$5,
-			updated_at := <datetime>$6
-		}`
+func (*Repo) Create(ctx context.Context, q database.Queryable, store model.StoreCreate) (int64, error) {
+	qb := database.PSQL.
+		Insert(database.TableStore).
+		Columns(
+			"title",
+			"affordability",
+			"cuisine",
+			"owner_username",
+			"image_id",
+			"avg_rating",
+			"number_of_reviews",
+			"created_at",
+			"updated_at",
+		).
+		Values(
+			store.Title,
+			store.Affordability,
+			store.Cuisine,
+			store.OwnerUsername,
+			store.ImageID,
+			store.AverageRating,
+			store.NumberOfReviews,
+			store.CreatedAt,
+			store.UpdatedAt,
+		).Suffix("returning id")
 
-	var dto storeDto
-	err := q.QuerySingle(ctx, query, &dto,
-		store.Title,
-		string(store.Affordability),
-		string(store.Cuisine),
-		store.OwnerUsername,
-		store.ImageID,
-		store.CreatedAt,
-		store.UpdatedAt,
-	)
+	var id int64
+	err := q.Get(ctx, &id, qb)
 	if err != nil {
-		return "", fmt.Errorf("insert: %w", err)
+		return 0, fmt.Errorf("insert store: %w", err)
 	}
 
-	return dto.ID.String(), nil
+	return id, nil
 }

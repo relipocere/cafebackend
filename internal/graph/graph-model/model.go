@@ -23,6 +23,10 @@ type CreateUserInput struct {
 	FullName string       `json:"fullName"`
 }
 
+type DeleteStoreInput struct {
+	ID int64 `json:"id"`
+}
+
 type GetAuthTokenInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -33,17 +37,18 @@ type GetAuthTokenPayload struct {
 }
 
 type Store struct {
-	ID            string        `json:"id"`
+	ID            int64         `json:"id"`
 	Title         string        `json:"title"`
 	Affordability Affordability `json:"affordability"`
 	CuisineType   CuisineType   `json:"cuisineType"`
+	OwnerUsername string        `json:"ownerUsername"`
 	ImageID       string        `json:"imageID"`
+	AverageRating int64         `json:"averageRating"`
 	CreatedAt     time.Time     `json:"createdAt"`
 	UpdatedAt     time.Time     `json:"updatedAt"`
 }
 
 type User struct {
-	UUID     string       `json:"uuid"`
 	Username string       `json:"username"`
 	Kind     UserKindEnum `json:"kind"`
 	FullName string       `json:"fullName"`

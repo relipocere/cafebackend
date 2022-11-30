@@ -14,15 +14,16 @@ import (
 type logFn func(format string, args ...interface{})
 
 // ErrorHandlerMw логгирует и прообразует ошибки в graphql-ные.
-func ErrorHandlerMw(log *zap.SugaredLogger) graphql.ErrorPresenterFunc {
+func ErrorHandlerMw() graphql.ErrorPresenterFunc {
 	return func(ctx context.Context, err error) *gqlerror.Error {
+
 		// gql в генерированном коде оборачивает ошибку
 		gqlErr, ok := err.(*gqlerror.Error)
 		if ok {
 			err = gqlErr.Unwrap()
 		}
 
-		logFunc, mappedErr := mapError(ctx, log, err)
+		logFunc, mappedErr := mapError(ctx,  err)
 
 		path := graphql.GetPath(ctx)
 		logFunc("'%s': %v", path.String(), err)
@@ -31,7 +32,7 @@ func ErrorHandlerMw(log *zap.SugaredLogger) graphql.ErrorPresenterFunc {
 	}
 }
 
-func mapError(ctx context.Context, log *zap.SugaredLogger, err error) (logFn, *gqlerror.Error) {
+func mapError(ctx context.Context,  err error) (logFn, *gqlerror.Error) {
 	if businessError := new(model.Error); errors.As(err, businessError) {
 		var code graphmodel.ErrorCode
 		switch businessError.Code {
@@ -47,10 +48,10 @@ func mapError(ctx context.Context, log *zap.SugaredLogger, err error) (logFn, *g
 			code = graphmodel.ErrorCodeFailedPrecondition
 		}
 
-		return log.Infof, graphqlError(ctx, businessError.Error(), code)
+		return zap.S().Infof, graphqlError(ctx, businessError.Error(), code)
 	}
 
-	return log.Errorf, graphqlError(ctx, "Internal server error", graphmodel.ErrorCodeInternal)
+	return zap.S().Errorf, graphqlError(ctx, "Internal server error", graphmodel.ErrorCodeInternal)
 }
 
 func graphqlError(ctx context.Context, message string, code graphmodel.ErrorCode) *gqlerror.Error {

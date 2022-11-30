@@ -41,6 +41,11 @@ func ErrMessageMaxLengthExceeded(field string, length int64) string {
 	return fmt.Sprintf("Field '%s' exceeds maximum limit of %d characters", field, length)
 }
 
+// ErrMessageInvalidID is the generic "bad id" message.
+func ErrMessageInvalidID [T any](field string, value T) string{
+	return fmt.Sprintf("Field '%s' has invalid identifier(s): '%v'", field, value)
+}
+
 // ErrMessageUnauthenticated is the generic "unauthenticated" message.
 func ErrMessageUnauthenticated() string {
 	return "Unauthenticated"

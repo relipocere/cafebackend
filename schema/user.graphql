@@ -20,7 +20,6 @@ type GetAuthTokenPayload{
 }
 
 type User{
-    uuid: String!
     username: String!
     kind: UserKindEnum!
     fullName: String!

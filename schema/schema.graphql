@@ -1,6 +1,7 @@
 type Mutation{
     createUser(input: CreateUserInput!): Boolean!
     createStore(input: CreateStoreInput!): Store! @isAuthenticated
+	deleteStore(input: DeleteStoreInput!): Boolean! @isAuthenticated
 }
 
 type Query{

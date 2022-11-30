@@ -18,11 +18,17 @@ enum CuisineType{
 }
 
 type Store{
-    id: String!
+    id: Int!
     title: String!
     affordability: Affordability!
     cuisineType: CuisineType!
+	ownerUsername: String!
     imageID: String!
+	averageRating: Int!
     createdAt: Time!
     updatedAt: Time!
+}
+
+input DeleteStoreInput{
+	id: Int!
 }

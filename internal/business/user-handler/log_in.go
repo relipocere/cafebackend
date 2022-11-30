@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	userdb "github.com/relipocere/cafebackend/internal/database/user"
 	"github.com/relipocere/cafebackend/internal/model"
 	"github.com/relipocere/cafebackend/internal/service/security"
 )
@@ -38,18 +39,27 @@ func (h *Handler) LogIn(ctx context.Context, req LogInRequest) (LogInResponse, e
 	password := req.Password
 	now := h.now()
 
-	err := h.logInValidateCredentials(ctx, username, password)
+	user, err := h.userRepo.Get(ctx, h.db, userdb.GetByUsername(username))
+	if err != nil {
+		return resp, fmt.Errorf("getting user by username '%s': %w", username, err)
+	}
+
+	if user == nil{
+		return resp, model.Error{
+			Message: logInBadCredsMessage,
+			Code:    model.ErrorCodeUnauthenticated,
+		}
+	}
+
+	err = h.logInValidateCredentials(ctx, *user, password)
 	if err != nil {
 		return resp, err
 	}
 
-	existingSession, err := h.userRepo.GetSession(ctx, h.edge, username)
-	if err != nil {
-		return resp, fmt.Errorf("getting session: %w", err)
-	}
 
+	existingSession := user.Session
 	if existingSession != nil && existingSession.ExpiresAt.After(now) {
-		resp.Token = existingSession.SessionID
+		resp.Token = existingSession.ID
 		return resp, nil
 	}
 
@@ -62,19 +72,7 @@ func (h *Handler) LogIn(ctx context.Context, req LogInRequest) (LogInResponse, e
 	return resp, nil
 }
 
-func (h *Handler) logInValidateCredentials(ctx context.Context, username, password string) error {
-	user, err := h.userRepo.Get(ctx, h.edge, username)
-	if err != nil {
-		return fmt.Errorf("get user %s: %w", username, err)
-	}
-
-	if user == nil {
-		return model.Error{
-			Message: logInBadCredsMessage,
-			Code:    model.ErrorCodeUnauthenticated,
-		}
-	}
-
+func (h *Handler) logInValidateCredentials(ctx context.Context, user model.User, password string) error {
 	isSamePassword := security.IsSameHash(password, user.PasswordHash, user.Salt)
 	if !isSamePassword {
 		return model.Error{
@@ -92,9 +90,8 @@ func (h *Handler) logInCreateSession(ctx context.Context, username string, now t
 		return "", fmt.Errorf("session id generation: %w", err)
 	}
 
-	err = h.userRepo.CreateSession(ctx, h.edge, model.Session{
-		SessionID: sessionID,
-		Username:  username,
+	err = h.userRepo.SetSession(ctx, h.db, username, model.Session{
+		ID: sessionID,
 		ExpiresAt: now.Add(sessionDuration),
 	})
 	if err != nil {

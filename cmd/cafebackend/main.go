@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/edgedb/edgedb-go"
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
 	storehandler "github.com/relipocere/cafebackend/internal/business/store-handler"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
+	"github.com/relipocere/cafebackend/internal/database"
 	"github.com/relipocere/cafebackend/internal/database/store"
 	"github.com/relipocere/cafebackend/internal/database/user"
 	"github.com/relipocere/cafebackend/internal/graph"
@@ -23,50 +23,54 @@ import (
 
 func main() {
 	ctx := context.Background()
+	defer closerCleanup()
 
-	log := mustInitLogger(true)
-	defer closerCleanup(log)
+	mustInitLogger(true)
+	mustInitViper()
 
-	mustInitViper(log)
-
-	edgeClient := mustCreateDBClient(ctx, log)
-	closerAdd(edgeClient.Close)
+	pgxPool := mustCreateDBClient(ctx)
+	closerAdd(func() error {
+		pgxPool.Close()
+		return nil
+	})
 
 	userRepo := user.NewRepo()
 	storeRepo := store.NewRepo()
 
-	userHandler := userhandler.NewHandler(edgeClient, userRepo)
-	storeHandler := storehandler.NewHandler(edgeClient, storeRepo)
+	masterNode := database.NewPGX(pgxPool)
+
+	userHandler := userhandler.NewHandler(masterNode, userRepo)
+	storeHandler := storehandler.NewHandler(masterNode, storeRepo)
 
 	resolver := graph.NewResolver(userHandler, storeHandler)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(resolver))
-	srv.SetErrorPresenter(middleware.ErrorHandlerMw(log))
+	srv.SetErrorPresenter(middleware.ErrorHandlerMw())
 
 	router := gin.Default()
-	router.Use(middleware.AuthenticationMW(edgeClient, userRepo))
+	router.Use(middleware.AuthenticationMW(masterNode, userRepo))
 
 	router.POST("/query", func(c *gin.Context) {
 		srv.ServeHTTP(c.Writer, c.Request)
 	})
 
 	port := viper.GetString("server.port")
-	log.Infof("starting server at port %s", port)
+	zap.S().Infof("starting server at port %s", port)
 
 	err := router.Run(port)
 	if err != nil {
-		log.Errorf("can't start server: %v", err)
+		zap.S().Errorf("can't start server: %v", err)
 		return
 	}
 }
 
-func mustCreateDBClient(ctx context.Context, log *zap.SugaredLogger) *edgedb.Client {
-	usr := viper.Get("edgedb.user")
-	password := viper.Get("edgedb.password")
-	host := viper.Get("edgedb.host")
-	port := viper.Get("edgedb.port")
-	db := viper.Get("edgedb.database")
+func mustCreateDBClient(ctx context.Context) *pgxpool.Pool {
+	usr := viper.Get("psql.user")
+	password := viper.Get("psql.password")
+	host := viper.Get("psql.host")
+	port := viper.Get("psql.port")
+	db := viper.Get("psql.database")
 
-	dsn := fmt.Sprintf("edgedb://%s:%s@%s:%s/%s?tls_security=insecure",
+	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		usr,
 		password,
 		host,
@@ -74,17 +78,22 @@ func mustCreateDBClient(ctx context.Context, log *zap.SugaredLogger) *edgedb.Cli
 		db,
 	)
 
-	client, err := edgedb.CreateClientDSN(ctx, dsn, edgedb.Options{
-		ConnectTimeout: time.Second,
-	})
+	zap.S().Debugw("establishing db connection", "dsn", dsn)
+
+	conn, err := pgxpool.New(ctx, dsn)
 	if err != nil {
-		log.Fatalf("connecting to db: %v", err)
+		zap.S().Fatalf("connecting to db: %v", err)
 	}
 
-	return client
+	err = conn.Ping(ctx)
+	if err != nil {
+		zap.S().Fatalf("db ping: %v", err)
+	}
+
+	return conn
 }
 
-func mustInitViper(log *zap.SugaredLogger) {
+func mustInitViper() {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
 	viper.AddConfigPath(".")
@@ -93,7 +102,7 @@ func mustInitViper(log *zap.SugaredLogger) {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatalf("can't read secrets: %v", err)
+		zap.S().Fatalf("can't read secrets: %v", err)
 	}
 }
 
@@ -103,18 +112,16 @@ func closerAdd(fn func() error) {
 	closers = append(closers, fn)
 }
 
-func closerCleanup(log *zap.SugaredLogger) {
-	log.Debug("Cleaning up")
+func closerCleanup() {
 	for _, fn := range closers {
 		err := fn()
 		if err != nil {
-			log.Errorf("Clean up: %v", err)
+			fmt.Printf("clean up: %v", err)
 		}
 	}
-	log.Sync()
 }
 
-func mustInitLogger(dev bool) *zap.SugaredLogger {
+func mustInitLogger(dev bool) {
 	cfg := &zap.Config{
 		Encoding:    "json",
 		Level:       zap.NewAtomicLevelAt(zapcore.InfoLevel),
@@ -140,5 +147,9 @@ func mustInitLogger(dev bool) *zap.SugaredLogger {
 		os.Exit(1)
 	}
 
-	return logger.Sugar()
+	zap.ReplaceGlobals(logger)
+
+	closerAdd(func() error {
+		return logger.Sync()
+	})
 }
