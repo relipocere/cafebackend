@@ -36,6 +36,27 @@ type GetAuthTokenPayload struct {
 	Token string `json:"token"`
 }
 
+type IntRange struct {
+	Start          *int64 `json:"start"`
+	End            *int64 `json:"end"`
+	EndExclusive   bool   `json:"endExclusive"`
+	StartExclusive bool   `json:"startExclusive"`
+}
+
+type Pagination struct {
+	Page  int64 `json:"page"`
+	Limit int64 `json:"limit"`
+}
+
+type SearchStoresInput struct {
+	Page           Pagination      `json:"page"`
+	TitleQuery     *string         `json:"titleQuery"`
+	Rating         *IntRange       `json:"rating"`
+	OwnerUsernames []string        `json:"ownerUsernames"`
+	Affordability  []Affordability `json:"affordability"`
+	Cuisines       []CuisineType   `json:"cuisines"`
+}
+
 type Store struct {
 	ID            int64         `json:"id"`
 	Title         string        `json:"title"`

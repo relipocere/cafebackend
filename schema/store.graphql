@@ -5,6 +5,15 @@ input CreateStoreInput{
     imageID: String!
 }
 
+input SearchStoresInput{
+	page: Pagination!
+	titleQuery: String	
+	rating: IntRange
+	ownerUsernames: [String!]
+	affordability: [Affordability!]
+	cuisines: [CuisineType!]
+}
+
 enum Affordability{
     CHEAP
     AFFORDABLE

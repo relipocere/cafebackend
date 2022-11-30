@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/relipocere/cafebackend/internal/auth"
+	"github.com/relipocere/cafebackend/internal/business/validation"
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
@@ -69,18 +70,14 @@ func validateCreateStoreRequest(req CreateStoreRequest, user model.User) error {
 		}
 	}
 
-	if !req.Affordability.IsValid() {
-		return model.Error{
-			Message: fmt.Sprintf("Invalid affordability: %s", string(req.Affordability)),
-			Code:    model.ErrorCodeBadRequest,
-		}
+	err := validation.ValidateAffordability(req.Affordability)
+	if err != nil{
+		return nil
 	}
 
-	if !req.Cuisine.IsValid() {
-		return model.Error{
-			Message: fmt.Sprintf("Invalid cuisine: %s", string(req.Cuisine)),
-			Code:    model.ErrorCodeBadRequest,
-		}
+	err = validation.ValidateCuisine(req.Cuisine)
+	if err != nil{
+		return nil
 	}
 
 	return nil

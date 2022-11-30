@@ -8,28 +8,38 @@ import (
 )
 
 // MapUser maps business user to graphql user.
-func MapUser(user model.User) (graphmodel.User, error) {
-	kind, err := mapUserKind(user.Kind)
+func MapUser(u model.User) (graphmodel.User, error) {
+	kind, err := mapUserKind(u.Kind)
 	if err != nil {
 		return graphmodel.User{}, err
 	}
 
 	return graphmodel.User{
-		Username: user.Username,
+		Username: u.Username,
 		Kind:     kind,
-		FullName: user.FullName,
+		FullName: u.FullName,
 	}, nil
 }
 
-func mapUserKind(kind model.UserKind) (graphmodel.UserKindEnum, error) {
-	switch kind {
+func mapUserKind(k model.UserKind) (graphmodel.UserKindEnum, error) {
+	switch k {
 	case model.UserKindBusiness:
 		return graphmodel.UserKindEnumBusiness, nil
 	case model.UserKindConsumer:
 		return graphmodel.UserKindEnumConsumer, nil
 	}
 
-	return "", fmt.Errorf("unknown user kind: %s", kind)
+	return "", fmt.Errorf("unknown user kind: %s", k)
+}
+
+func MapStores(ss []model.Store) []graphmodel.Store {
+	stores := make([]graphmodel.Store, 0, len(ss))
+
+	for _, s := range ss {
+		stores = append(stores, MapStore(s))
+	}
+
+	return stores
 }
 
 // MapStore maps store to gql entity Store.
@@ -48,8 +58,8 @@ func MapStore(s model.Store) graphmodel.Store {
 }
 
 // MapAffordability maps affordability to gql entity Affordability.
-func MapAffordability(affordability model.Affordability) graphmodel.Affordability {
-	switch affordability {
+func MapAffordability(a model.Affordability) graphmodel.Affordability {
+	switch a {
 	case model.AffordabilityCheap:
 		return graphmodel.AffordabilityCheap
 	case model.AffordabilityAffordable:
@@ -58,12 +68,12 @@ func MapAffordability(affordability model.Affordability) graphmodel.Affordabilit
 		return graphmodel.AffordabilityExpensive
 	}
 
-	return graphmodel.Affordability(string(affordability))
+	return graphmodel.Affordability(string(a))
 }
 
 // MapCuisine maps cuisine type to gql entity.
-func MapCuisine(cuisine model.Cuisine) graphmodel.CuisineType {
-	switch cuisine {
+func MapCuisine(c model.Cuisine) graphmodel.CuisineType {
+	switch c {
 	case model.CuisineAmerican:
 		return graphmodel.CuisineTypeAmerican
 	case model.CuisineAsian:
@@ -72,5 +82,5 @@ func MapCuisine(cuisine model.Cuisine) graphmodel.CuisineType {
 		return graphmodel.CuisineTypeEuropean
 	}
 
-	return graphmodel.CuisineType(string(cuisine))
+	return graphmodel.CuisineType(string(c))
 }
