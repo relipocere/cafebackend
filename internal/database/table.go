@@ -6,4 +6,5 @@ const (
 	TableStore       = "store"
 	TableProduct     = "product"
 	TableStoreReview = "store_review"
+	TableImage       = "image"
 )

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 
 	"github.com/99designs/gqlgen/graphql/handler"
@@ -11,6 +12,7 @@ import (
 	storehandler "github.com/relipocere/cafebackend/internal/business/store-handler"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
 	"github.com/relipocere/cafebackend/internal/database"
+	"github.com/relipocere/cafebackend/internal/database/image"
 	"github.com/relipocere/cafebackend/internal/database/store"
 	"github.com/relipocere/cafebackend/internal/database/user"
 	"github.com/relipocere/cafebackend/internal/graph"
@@ -27,6 +29,7 @@ func main() {
 
 	mustInitLogger(true)
 	mustInitViper()
+	mustInitFilesDirecotry()
 
 	pgxPool := mustCreateDBClient(ctx)
 	closerAdd(func() error {
@@ -34,15 +37,24 @@ func main() {
 		return nil
 	})
 
+	filesDir := viper.GetString("server.files_dir")
+
 	userRepo := user.NewRepo()
 	storeRepo := store.NewRepo()
+	imageRepo := image.NewRepo()
 
 	masterNode := database.NewPGX(pgxPool)
 
 	userHandler := userhandler.NewHandler(masterNode, userRepo)
 	storeHandler := storehandler.NewHandler(masterNode, storeRepo)
 
-	resolver := graph.NewResolver(userHandler, storeHandler)
+	resolver := graph.NewResolver(
+		filesDir,
+		masterNode,
+		imageRepo,
+		userHandler,
+		storeHandler,
+	)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(resolver))
 	srv.SetErrorPresenter(middleware.ErrorHandlerMw())
 
@@ -152,4 +164,11 @@ func mustInitLogger(dev bool) {
 	closerAdd(func() error {
 		return logger.Sync()
 	})
+}
+
+func mustInitFilesDirecotry(){
+	err := os.MkdirAll(viper.GetString("server.files_dir"), fs.ModePerm)
+	if err != nil{
+		zap.S().Fatalf("can't create files directory: %v", err)
+	}
 }

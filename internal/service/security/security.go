@@ -43,7 +43,7 @@ func GenerateSessionID() (string, error) {
 	b := make([]byte, 256)
 	_, err := io.ReadFull(rand.Reader, b)
 	if err != nil {
-		return "", fmt.Errorf("salt generation: %w", err)
+		return "", fmt.Errorf("session id generation: %w", err)
 	}
 
 	return base64.URLEncoding.EncodeToString(b), nil
