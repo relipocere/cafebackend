@@ -17,19 +17,18 @@ import (
 
 type imageRepo interface {
 	Create(ctx context.Context, q database.Queryable, image model.ImageMeta) error
-	Get(ctx context.Context, q database.Queryable, imageID string) (*model.ImageMeta, error)
 }
 
 type App struct {
 	filesDir  string
-	db database.PGX
+	db        database.PGX
 	imageRepo imageRepo
 }
 
-func NewApp(filesDir string,db database.PGX, imageRepo imageRepo) *App {
+func NewApp(filesDir string, db database.PGX, imageRepo imageRepo) *App {
 	return &App{
 		filesDir:  filesDir,
-		db: db,
+		db:        db,
 		imageRepo: imageRepo,
 	}
 }
@@ -49,24 +48,24 @@ func (a *App) UploadImage(ctx context.Context, image graphql.Upload) (string, er
 
 	imageID := uuid.NewString()
 	fileBytes, err := io.ReadAll(image.File)
-	if err != nil{
+	if err != nil {
 		return "", fmt.Errorf("read all: %w", err)
 	}
 
-	writePath := filepath.Join(a.filesDir, imageID)
-	err = os.WriteFile(writePath, fileBytes, fs.ModePerm)
-	if err != nil{
-		return "", fmt.Errorf("write file to '%s': %w", writePath, err)
+	filePath := filepath.Join(a.filesDir, imageID)
+	err = os.WriteFile(filePath, fileBytes, fs.ModePerm)
+	if err != nil {
+		return "", fmt.Errorf("write file to '%s': %w", filePath, err)
 	}
 
 	err = a.imageRepo.Create(ctx, a.db, model.ImageMeta{
-		ID: imageID,
+		ID:            imageID,
 		OwnerUsername: user.Username,
-		Size: image.Size,
-		ContentType: image.ContentType,
+		Size:          image.Size,
+		ContentType:   image.ContentType,
 	})
-	if err != nil{
-		return "", fmt.Errorf("save image meta: %w", err) 
+	if err != nil {
+		return "", fmt.Errorf("save image meta: %w", err)
 	}
 
 	return imageID, nil

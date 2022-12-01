@@ -378,6 +378,7 @@ input Pagination{
     createUser(input: CreateUserInput!): Boolean!
     createStore(input: CreateStoreInput!): Store! @isAuthenticated
 	deleteStore(input: DeleteStoreInput!): Boolean! @isAuthenticated
+	"""to get uploaded image visit /assets/imageID"""
 	uploadImage(image: Upload!): String! @isAuthenticated
 }
 

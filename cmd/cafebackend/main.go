@@ -59,6 +59,7 @@ func main() {
 	srv.SetErrorPresenter(middleware.ErrorHandlerMw())
 
 	router := gin.Default()
+	router.Static("/assets", filesDir)
 	router.Use(middleware.AuthenticationMW(masterNode, userRepo))
 
 	router.POST("/query", func(c *gin.Context) {
