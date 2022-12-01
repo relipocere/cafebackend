@@ -3,11 +3,14 @@ package graph
 import (
 	"context"
 
+	"github.com/99designs/gqlgen/graphql"
 	storehandler "github.com/relipocere/cafebackend/internal/business/store-handler"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
+	"github.com/relipocere/cafebackend/internal/database"
 	"github.com/relipocere/cafebackend/internal/graph/directive"
 	"github.com/relipocere/cafebackend/internal/graph/generated"
 	graphmodel "github.com/relipocere/cafebackend/internal/graph/graph-model"
+	"github.com/relipocere/cafebackend/internal/graph/image"
 	"github.com/relipocere/cafebackend/internal/graph/store"
 	"github.com/relipocere/cafebackend/internal/graph/user"
 	"github.com/relipocere/cafebackend/internal/model"
@@ -24,19 +27,29 @@ type storeHandler interface {
 	SearchStores(ctx context.Context, req storehandler.SearchStoresRequest) ([]model.Store, error)
 }
 
+type imageRepo interface {
+	Create(ctx context.Context, q database.Queryable, image model.ImageMeta) error
+	Get(ctx context.Context, q database.Queryable, imageID string) (*model.ImageMeta, error)
+}
+
 func NewResolver(
+	filesDir string,
+	db database.PGX,
+	imageRepo imageRepo,
 	userHandler userHandler,
 	storeHandler storeHandler,
 ) generated.Config {
 	userApp := user.NewApp(userHandler)
 	storeApp := store.NewApp(storeHandler)
 	directiveApp := directive.NewApp()
+	imageApp := image.NewApp(filesDir, db, imageRepo)
 
 	cfg := generated.Config{
 		Resolvers: &Resolver{
 			mutationResolver: &mutationResolver{
 				user:  userApp,
 				store: storeApp,
+				image: imageApp,
 			},
 
 			queryResolver: &queryResolver{
@@ -58,6 +71,7 @@ type Resolver struct {
 type mutationResolver struct {
 	user  *user.App
 	store *store.App
+	image *image.App
 }
 
 type queryResolver struct {
@@ -67,10 +81,6 @@ type queryResolver struct {
 
 func (r *Resolver) Mutation() generated.MutationResolver {
 	return r.mutationResolver
-}
-
-func (r *Resolver) Query() generated.QueryResolver {
-	return r.queryResolver
 }
 
 func (m *mutationResolver) CreateUser(ctx context.Context, input graphmodel.CreateUserInput) (bool, error) {
@@ -83,6 +93,14 @@ func (m *mutationResolver) CreateStore(ctx context.Context, input graphmodel.Cre
 
 func (m *mutationResolver) DeleteStore(ctx context.Context, input graphmodel.DeleteStoreInput) (bool, error) {
 	return m.store.DeleteStore(ctx, input)
+}
+
+func (m *mutationResolver) UploadImage(ctx context.Context, image graphql.Upload) (string, error) {
+	return m.image.UploadImage(ctx, image) 
+}
+
+func (r *Resolver) Query() generated.QueryResolver {
+	return r.queryResolver
 }
 
 func (q *queryResolver) GetAuthToken(

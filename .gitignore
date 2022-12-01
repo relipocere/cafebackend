@@ -4,6 +4,7 @@ local-db
 .env
 .DS_Store
 bin
+data
 
 # Binaries for programs and plugins
 *.exe

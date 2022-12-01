@@ -9,3 +9,4 @@ database=""
 [server]
 # Overrides default port 9000
 port=""
+files_dir="data/"

@@ -7,6 +7,7 @@ require (
 	github.com/Masterminds/squirrel v1.5.3
 	github.com/georgysavva/scany/v2 v2.0.0
 	github.com/gin-gonic/gin v1.8.1
+	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v5 v5.1.1
 	github.com/spf13/viper v1.13.0
 	github.com/vektah/gqlparser/v2 v2.5.1
