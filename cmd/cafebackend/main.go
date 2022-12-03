@@ -9,10 +9,12 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+	producthandler "github.com/relipocere/cafebackend/internal/business/product-handler"
 	storehandler "github.com/relipocere/cafebackend/internal/business/store-handler"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
 	"github.com/relipocere/cafebackend/internal/database"
 	"github.com/relipocere/cafebackend/internal/database/image"
+	"github.com/relipocere/cafebackend/internal/database/product"
 	"github.com/relipocere/cafebackend/internal/database/store"
 	"github.com/relipocere/cafebackend/internal/database/user"
 	"github.com/relipocere/cafebackend/internal/graph"
@@ -42,11 +44,13 @@ func main() {
 	userRepo := user.NewRepo()
 	storeRepo := store.NewRepo()
 	imageRepo := image.NewRepo()
+	productRepo := product.NewRepo()
 
 	masterNode := database.NewPGX(pgxPool)
 
 	userHandler := userhandler.NewHandler(masterNode, userRepo)
 	storeHandler := storehandler.NewHandler(masterNode, storeRepo)
+	productHandler := producthandler.NewHandler(masterNode, productRepo, storeRepo)
 
 	resolver := graph.NewResolver(
 		filesDir,
@@ -54,6 +58,7 @@ func main() {
 		imageRepo,
 		userHandler,
 		storeHandler,
+		productHandler,
 	)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(resolver))
 	srv.SetErrorPresenter(middleware.ErrorHandlerMw())
@@ -167,9 +172,9 @@ func mustInitLogger(dev bool) {
 	})
 }
 
-func mustInitFilesDirecotry(){
+func mustInitFilesDirecotry() {
 	err := os.MkdirAll(viper.GetString("server.files_dir"), fs.ModePerm)
-	if err != nil{
+	if err != nil {
 		zap.S().Fatalf("can't create files directory: %v", err)
 	}
 }

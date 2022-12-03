@@ -42,7 +42,7 @@ func ErrMessageMaxLengthExceeded(field string, length int64) string {
 }
 
 // ErrMessageInvalidID is the generic "bad id" message.
-func ErrMessageInvalidID [T any](field string, value T) string{
+func ErrMessageInvalidID[T any](field string, value T) string {
 	return fmt.Sprintf("Field '%s' has invalid identifier(s): '%v'", field, value)
 }
 

@@ -14,8 +14,8 @@ func (*Repo) Create(ctx context.Context, q database.Queryable, image model.Image
 		Columns("id", "owner_username", "byte_size", "content_type").
 		Values(image.ID, image.OwnerUsername, image.Size, image.ContentType)
 
-	_, err  := q.Exec(ctx, qb)
-	if err != nil{
+	_, err := q.Exec(ctx, qb)
+	if err != nil {
 		return err
 	}
 

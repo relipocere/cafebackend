@@ -27,20 +27,20 @@ func mapToUser(d userDto) (model.User, error) {
 	}
 
 	var session *model.Session
-	if d.SessionID != nil && d.SessionExpiresAt != nil{
+	if d.SessionID != nil && d.SessionExpiresAt != nil {
 		session = &model.Session{
-			ID: *d.SessionID,
+			ID:        *d.SessionID,
 			ExpiresAt: *d.SessionExpiresAt,
 		}
 	}
 	return model.User{
-		Username:         d.Username,
-		FullName:         d.FullName,
-		Kind:             userKind,
-		PasswordHash:     d.PasswordHash,
-		Salt:             d.Salt,
-		CreatedAt:        d.CreatedAt,
-		UpdatedAt:        d.UpdatedAt,
-		Session: session,
+		Username:     d.Username,
+		FullName:     d.FullName,
+		Kind:         userKind,
+		PasswordHash: d.PasswordHash,
+		Salt:         d.Salt,
+		CreatedAt:    d.CreatedAt,
+		UpdatedAt:    d.UpdatedAt,
+		Session:      session,
 	}, nil
 }

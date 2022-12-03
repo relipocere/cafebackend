@@ -23,7 +23,7 @@ func ErrorHandlerMw() graphql.ErrorPresenterFunc {
 			err = gqlErr.Unwrap()
 		}
 
-		logFunc, mappedErr := mapError(ctx,  err)
+		logFunc, mappedErr := mapError(ctx, err)
 
 		path := graphql.GetPath(ctx)
 		logFunc("'%s': %v", path.String(), err)
@@ -32,7 +32,7 @@ func ErrorHandlerMw() graphql.ErrorPresenterFunc {
 	}
 }
 
-func mapError(ctx context.Context,  err error) (logFn, *gqlerror.Error) {
+func mapError(ctx context.Context, err error) (logFn, *gqlerror.Error) {
 	if businessError := new(model.Error); errors.As(err, businessError) {
 		var code graphmodel.ErrorCode
 		switch businessError.Code {

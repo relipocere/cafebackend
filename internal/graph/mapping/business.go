@@ -41,14 +41,14 @@ func MapToAffordability(a graphmodel.Affordability) model.Affordability {
 	return model.Affordability(a.String())
 }
 
-func MapToCuisines(cc []graphmodel.CuisineType ) []model.Cuisine{
+func MapToCuisines(cc []graphmodel.CuisineType) []model.Cuisine {
 	var cuisines []model.Cuisine
 
 	for _, c := range cc {
 		cuisines = append(cuisines, MapToCuisine(c))
 	}
 
-	return cuisines 
+	return cuisines
 }
 
 // MapToCuisine maps cuisine type to business entity.
@@ -73,7 +73,7 @@ func MapToPagination(p graphmodel.Pagination) model.Pagination {
 }
 
 func MapToIntRange(r *graphmodel.IntRange) *model.IntRange {
-	if r == nil{
+	if r == nil {
 		return nil
 	}
 

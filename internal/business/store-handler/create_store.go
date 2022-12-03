@@ -70,14 +70,19 @@ func validateCreateStoreRequest(req CreateStoreRequest, user model.User) error {
 		}
 	}
 
-	err := validation.ValidateAffordability(req.Affordability)
-	if err != nil{
-		return nil
+	err := validation.ValidateName(req.Title, "Title")
+	if err != nil {
+		return err
+	}
+
+	err = validation.ValidateAffordability(req.Affordability)
+	if err != nil {
+		return err
 	}
 
 	err = validation.ValidateCuisine(req.Cuisine)
-	if err != nil{
-		return nil
+	if err != nil {
+		return err
 	}
 
 	return nil
