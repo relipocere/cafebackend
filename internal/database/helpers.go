@@ -1,10 +1,14 @@
 package database
 
 import (
+	"context"
+	"errors"
 	"strings"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
 	"github.com/relipocere/cafebackend/internal/model"
+	"go.uber.org/zap"
 )
 
 // PSQL query builder with postgres placeholder already set.
@@ -43,4 +47,11 @@ func PreventNullSlice[T any](slice []T) []T {
 
 func SanitizeLikeQuery(query string) string {
 	return likeQuerySanitizer.Replace(query)
+}
+
+func RollbackTx(ctx context.Context, tx Tx, callerFuncName string) {
+	err := tx.Rollback(ctx)
+	if err != nil && !errors.Is(err, pgx.ErrTxClosed) {
+		zap.S().Errorf("rollback tx in %s: %w", callerFuncName, err)
+	}
 }

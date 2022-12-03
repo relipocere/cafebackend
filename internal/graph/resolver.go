@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	producthandler "github.com/relipocere/cafebackend/internal/business/product-handler"
 	storehandler "github.com/relipocere/cafebackend/internal/business/store-handler"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
 	"github.com/relipocere/cafebackend/internal/database"
@@ -11,6 +12,7 @@ import (
 	"github.com/relipocere/cafebackend/internal/graph/generated"
 	graphmodel "github.com/relipocere/cafebackend/internal/graph/graph-model"
 	"github.com/relipocere/cafebackend/internal/graph/image"
+	"github.com/relipocere/cafebackend/internal/graph/product"
 	"github.com/relipocere/cafebackend/internal/graph/store"
 	"github.com/relipocere/cafebackend/internal/graph/user"
 	"github.com/relipocere/cafebackend/internal/model"
@@ -27,6 +29,10 @@ type storeHandler interface {
 	SearchStores(ctx context.Context, req storehandler.SearchStoresRequest) ([]model.Store, error)
 }
 
+type productHandler interface {
+	CreateProdcut(ctx context.Context, req producthandler.CreateProductRequest) (model.Product, error)
+}
+
 type imageRepo interface {
 	Create(ctx context.Context, q database.Queryable, image model.ImageMeta) error
 	Get(ctx context.Context, q database.Queryable, imageID string) (*model.ImageMeta, error)
@@ -38,18 +44,21 @@ func NewResolver(
 	imageRepo imageRepo,
 	userHandler userHandler,
 	storeHandler storeHandler,
+	productHandler productHandler,
 ) generated.Config {
 	userApp := user.NewApp(userHandler)
 	storeApp := store.NewApp(storeHandler)
 	directiveApp := directive.NewApp()
 	imageApp := image.NewApp(filesDir, db, imageRepo)
+	productApp := product.NewApp(productHandler)
 
 	cfg := generated.Config{
 		Resolvers: &Resolver{
 			mutationResolver: &mutationResolver{
-				user:  userApp,
-				store: storeApp,
-				image: imageApp,
+				user:    userApp,
+				store:   storeApp,
+				image:   imageApp,
+				product: productApp,
 			},
 
 			queryResolver: &queryResolver{
@@ -69,9 +78,10 @@ type Resolver struct {
 }
 
 type mutationResolver struct {
-	user  *user.App
-	store *store.App
-	image *image.App
+	user    *user.App
+	store   *store.App
+	image   *image.App
+	product *product.App
 }
 
 type queryResolver struct {
@@ -96,7 +106,11 @@ func (m *mutationResolver) DeleteStore(ctx context.Context, input graphmodel.Del
 }
 
 func (m *mutationResolver) UploadImage(ctx context.Context, image graphql.Upload) (string, error) {
-	return m.image.UploadImage(ctx, image) 
+	return m.image.UploadImage(ctx, image)
+}
+
+func (m *mutationResolver) CreateProduct(ctx context.Context, input graphmodel.CreateProductInput) (graphmodel.Product, error) {
+	return m.product.CreateProduct(ctx, input)
 }
 
 func (r *Resolver) Query() generated.QueryResolver {

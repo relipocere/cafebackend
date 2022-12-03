@@ -9,6 +9,14 @@ import (
 	"time"
 )
 
+type CreateProductInput struct {
+	Name        string   `json:"name"`
+	StoreID     int64    `json:"storeID"`
+	Ingredients []string `json:"ingredients"`
+	Calories    int64    `json:"calories"`
+	ImageID     string   `json:"imageID"`
+}
+
 type CreateStoreInput struct {
 	Title         string        `json:"title"`
 	Affordability Affordability `json:"affordability"`
@@ -46,6 +54,17 @@ type IntRange struct {
 type Pagination struct {
 	Page  int64 `json:"page"`
 	Limit int64 `json:"limit"`
+}
+
+type Product struct {
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	StoreID     int64     `json:"storeID"`
+	Ingredients []string  `json:"ingredients"`
+	Calories    int64     `json:"calories"`
+	ImageID     string    `json:"imageID"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type SearchStoresInput struct {

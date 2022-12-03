@@ -7,6 +7,31 @@ import (
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
+// MapProducts maps business products to graphql products.
+func MapProducts(pp []model.Product) []graphmodel.Product {
+	products := make([]graphmodel.Product, 0, len(pp))
+
+	for _, p := range pp {
+		products = append(products, MapProduct(p))
+	}
+
+	return products
+}
+
+// MapProduct maps business product to graphql product.
+func MapProduct(p model.Product) graphmodel.Product {
+	return graphmodel.Product{
+		ID:          p.ID,
+		Name:        p.Name,
+		StoreID:     p.StoreID,
+		Ingredients: p.Ingredients,
+		Calories:    p.Calories,
+		ImageID:     p.ImageID,
+		CreatedAt:   p.CreatedAt,
+		UpdatedAt:   p.UpdatedAt,
+	}
+}
+
 // MapUser maps business user to graphql user.
 func MapUser(u model.User) (graphmodel.User, error) {
 	kind, err := mapUserKind(u.Kind)

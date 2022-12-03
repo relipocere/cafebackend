@@ -1,0 +1,18 @@
+type Product{
+	id: Int!
+	name: String!
+	storeID: Int!
+	ingredients: [String!]!
+	calories: Int!
+	imageID: String!
+	createdAt: Time!
+	updatedAt: Time!
+}
+
+input CreateProductInput{
+	name: String!
+	storeID: Int!
+	ingredients: [String!]!
+	calories: Int!
+	imageID: String!
+}

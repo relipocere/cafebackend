@@ -44,7 +44,7 @@ func (h *Handler) LogIn(ctx context.Context, req LogInRequest) (LogInResponse, e
 		return resp, fmt.Errorf("getting user by username '%s': %w", username, err)
 	}
 
-	if user == nil{
+	if user == nil {
 		return resp, model.Error{
 			Message: logInBadCredsMessage,
 			Code:    model.ErrorCodeUnauthenticated,
@@ -55,7 +55,6 @@ func (h *Handler) LogIn(ctx context.Context, req LogInRequest) (LogInResponse, e
 	if err != nil {
 		return resp, err
 	}
-
 
 	existingSession := user.Session
 	if existingSession != nil && existingSession.ExpiresAt.After(now) {
@@ -91,7 +90,7 @@ func (h *Handler) logInCreateSession(ctx context.Context, username string, now t
 	}
 
 	err = h.userRepo.SetSession(ctx, h.db, username, model.Session{
-		ID: sessionID,
+		ID:        sessionID,
 		ExpiresAt: now.Add(sessionDuration),
 	})
 	if err != nil {

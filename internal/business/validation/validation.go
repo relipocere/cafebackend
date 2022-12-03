@@ -10,14 +10,14 @@ import (
 func ValidatePagination(page model.Pagination) error {
 	if page.Page < 1 {
 		return model.Error{
-			Code: model.ErrorCodeBadRequest,
+			Code:    model.ErrorCodeBadRequest,
 			Message: fmt.Sprintf("Page number can't be less than 1. Provided value: %d", page.Page),
 		}
 	}
 
-	if page.ItemsPerPage < 1{
+	if page.ItemsPerPage < 1 {
 		return model.Error{
-			Code: model.ErrorCodeBadRequest,
+			Code:    model.ErrorCodeBadRequest,
 			Message: fmt.Sprintf("Number of items per page can't be less than 1. Provided value: %d", page.Page),
 		}
 	}
@@ -30,8 +30,13 @@ func ValidateUsername(username string) error {
 	return validateLength(username, 20, "username")
 }
 
-func ValidateUsernames(usernames []string) error{
-	for _, username := range usernames{
+// ValidateName validates names of entities.
+func ValidateName(name string, fieldName string) error {
+	return validateLength(name, 100, fieldName)
+}
+
+func ValidateUsernames(usernames []string) error {
+	for _, username := range usernames {
 		err := ValidateUsername(username)
 		if err != nil {
 			return err
