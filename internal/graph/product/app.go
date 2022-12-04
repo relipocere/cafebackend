@@ -13,6 +13,7 @@ import (
 type productHandler interface {
 	CreateProdcut(ctx context.Context, req producthandler.CreateProductRequest) (model.Product, error)
 	DeleteProduct(ctx context.Context, productID int64) error
+	SearchProducts(ctx context.Context, req producthandler.SearchProductsRequest) ([]model.Product, error)
 }
 
 type App struct {
@@ -48,4 +49,20 @@ func (a *App) DeleteProduct(ctx context.Context, productID int64) (bool, error) 
 	}
 
 	return true, nil
+}
+
+func (a *App) SearchProducts(ctx context.Context, input graphmodel.SearchProductsInput) ([]graphmodel.Product, error) {
+	page := mapping.MapToPagination(input.Page)
+
+	products, err := a.productHandler.SearchProducts(ctx, producthandler.SearchProductsRequest{
+		Page:       page,
+		StoreIDs:   input.StoreIDs,
+		PriceCents: mapping.MapToIntRange(input.PriceCents),
+		Calories:   mapping.MapToIntRange(input.Calories),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("business handler: %w", err)
+	}
+
+	return mapping.MapProducts(products), nil
 }

@@ -69,6 +69,13 @@ type Product struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+type SearchProductsInput struct {
+	Page       Pagination `json:"page"`
+	StoreIDs   []int64    `json:"storeIDs"`
+	PriceCents *IntRange  `json:"priceCents"`
+	Calories   *IntRange  `json:"calories"`
+}
+
 type SearchStoresInput struct {
 	Page           Pagination      `json:"page"`
 	TitleQuery     *string         `json:"titleQuery"`

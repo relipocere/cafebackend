@@ -12,6 +12,7 @@ type Query{
     getAuthToken(input: GetAuthTokenInput!): GetAuthTokenPayload!
     me: User! @isAuthenticated
 	searchStores(input: SearchStoresInput!): [Store!] @isAuthenticated
+	searchProducts(input: SearchProductsInput!): [Product!] @isAuthenticated
 }
 
 scalar Time
