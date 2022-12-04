@@ -35,6 +35,7 @@ create table product(
 	id bigserial primary key,
 	name text not null,
 	store_id bigint references store(id) on delete cascade,
+	price_cents bigint not null,
 	ingredients text[] not null,
 	calories bigint not null,
 	image_id text not null,

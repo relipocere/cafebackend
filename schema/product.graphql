@@ -2,6 +2,7 @@ type Product{
 	id: Int!
 	name: String!
 	storeID: Int!
+	priceCents: Int!
 	ingredients: [String!]!
 	calories: Int!
 	imageID: String!
@@ -12,6 +13,7 @@ type Product{
 input CreateProductInput{
 	name: String!
 	storeID: Int!
+	priceCents: Int!
 	ingredients: [String!]!
 	calories: Int!
 	imageID: String!

@@ -24,6 +24,7 @@ func MapProduct(p model.Product) graphmodel.Product {
 		ID:          p.ID,
 		Name:        p.Name,
 		StoreID:     p.StoreID,
+		PriceCents:  p.PriceCents,
 		Ingredients: p.Ingredients,
 		Calories:    p.Calories,
 		ImageID:     p.ImageID,

@@ -12,6 +12,7 @@ import (
 type CreateProductInput struct {
 	Name        string   `json:"name"`
 	StoreID     int64    `json:"storeID"`
+	PriceCents  int64    `json:"priceCents"`
 	Ingredients []string `json:"ingredients"`
 	Calories    int64    `json:"calories"`
 	ImageID     string   `json:"imageID"`
@@ -60,6 +61,7 @@ type Product struct {
 	ID          int64     `json:"id"`
 	Name        string    `json:"name"`
 	StoreID     int64     `json:"storeID"`
+	PriceCents  int64     `json:"priceCents"`
 	Ingredients []string  `json:"ingredients"`
 	Calories    int64     `json:"calories"`
 	ImageID     string    `json:"imageID"`

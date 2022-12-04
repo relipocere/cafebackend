@@ -7,12 +7,14 @@ import (
 	"github.com/relipocere/cafebackend/internal/auth"
 	"github.com/relipocere/cafebackend/internal/business/validation"
 	"github.com/relipocere/cafebackend/internal/database"
+	storedb "github.com/relipocere/cafebackend/internal/database/store"
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
 type CreateProductRequest struct {
 	Name        string
 	StoreID     int64
+	PriceCents  int64
 	Ingerdients []string
 	Calories    int64
 	ImageID     string
@@ -38,7 +40,7 @@ func (h *Handler) CreateProdcut(ctx context.Context, req CreateProductRequest) (
 		return model.Product{}, fmt.Errorf("no user in the context")
 	}
 
-	stores, err := h.storeRepo.Get(ctx, tx, []int64{req.StoreID})
+	stores, err := h.storeRepo.Get(ctx, tx, storedb.GetByIDs([]int64{req.StoreID}))
 	if err != nil {
 		return model.Product{}, fmt.Errorf("getting store %d: %w", req.StoreID, err)
 	}
@@ -61,6 +63,7 @@ func (h *Handler) CreateProdcut(ctx context.Context, req CreateProductRequest) (
 	productToCreate := model.ProductCreate{
 		Name:        req.Name,
 		StoreID:     req.StoreID,
+		PriceCents:  req.PriceCents,
 		Ingredients: req.Ingerdients,
 		Calories:    req.Calories,
 		ImageID:     req.ImageID,
@@ -71,6 +74,11 @@ func (h *Handler) CreateProdcut(ctx context.Context, req CreateProductRequest) (
 	productID, err := h.productRepo.Create(ctx, tx, productToCreate)
 	if err != nil {
 		return model.Product{}, fmt.Errorf("create product record: %w", err)
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return model.Product{}, fmt.Errorf("commit tx: %w", err)
 	}
 
 	return model.Product{

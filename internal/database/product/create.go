@@ -15,6 +15,7 @@ func (*Repo) Create(ctx context.Context, q database.Queryable, product model.Pro
 		Columns(
 			"name",
 			"store_id",
+			"price_cents",
 			"ingredients",
 			"calories",
 			"image_id",
@@ -24,6 +25,7 @@ func (*Repo) Create(ctx context.Context, q database.Queryable, product model.Pro
 		Values(
 			product.Name,
 			product.StoreID,
+			product.PriceCents,
 			database.PreventNullSlice(product.Ingredients),
 			product.Calories,
 			product.ImageID,

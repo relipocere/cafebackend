@@ -9,18 +9,18 @@ import (
 
 var baseSelectQuery = database.PSQL.
 	Select(
-		"id",
-		"title",
-		"affordability",
-		"cuisine",
-		"owner_username",
-		"image_id",
-		"avg_rating",
-		"number_of_reviews",
-		"created_at",
-		"updated_at",
+		"s.id",
+		"s.title",
+		"s.affordability",
+		"s.cuisine",
+		"s.owner_username",
+		"s.image_id",
+		"s.avg_rating",
+		"s.number_of_reviews",
+		"s.created_at",
+		"s.updated_at",
 	).
-	From(database.TableStore)
+	From(database.TableStore + " s")
 
 type storeDto struct {
 	ID              int64     `db:"id"`

@@ -5,6 +5,7 @@ type Mutation{
 	"""to get uploaded image visit /assets/imageID"""
 	uploadImage(image: Upload!): String! @isAuthenticated
 	createProduct(input: CreateProductInput!): Product! @isAuthenticated
+	deleteProduct(productID: Int!): Boolean! @isAuthenticated
 }
 
 type Query{

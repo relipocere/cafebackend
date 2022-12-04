@@ -31,15 +31,15 @@ func (*Repo) Search(ctx context.Context, q database.Queryable, page model.Pagina
 func applySearchFilter(qb sq.SelectBuilder, filter model.StoreFilter) sq.SelectBuilder {
 	if filter.TitleQuery != nil {
 		predicate := "%" + database.SanitizeLikeQuery(*filter.TitleQuery) + "%s"
-		qb = qb.Where(sq.ILike{"title": predicate})
+		qb = qb.Where(sq.ILike{"s.title": predicate})
 	}
 
 	if filter.AverageRating != nil {
-		qb = database.ApplyIntFilter(qb, "avg_rating", *filter.AverageRating)
+		qb = database.ApplyIntFilter(qb, "s.avg_rating", *filter.AverageRating)
 	}
 
 	if len(filter.OwnerUsernames) != 0 {
-		qb = qb.Where(sq.Eq{"owner_username": filter.OwnerUsernames})
+		qb = qb.Where(sq.Eq{"s.owner_username": filter.OwnerUsernames})
 	}
 
 	if len(filter.Affordability) != 0 {
@@ -48,7 +48,7 @@ func applySearchFilter(qb sq.SelectBuilder, filter model.StoreFilter) sq.SelectB
 			values = append(values, string(afforaffordability))
 		}
 
-		qb = qb.Where(sq.Eq{"affordability": values})
+		qb = qb.Where(sq.Eq{"s.affordability": values})
 	}
 
 	if len(filter.Cuisines) != 0 {
@@ -57,7 +57,7 @@ func applySearchFilter(qb sq.SelectBuilder, filter model.StoreFilter) sq.SelectB
 			values = append(values, string(cuisine))
 		}
 
-		qb = qb.Where(sq.Eq{"cuisine": values})
+		qb = qb.Where(sq.Eq{"s.cuisine": values})
 	}
 
 	return qb

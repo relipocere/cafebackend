@@ -12,6 +12,7 @@ type Product struct {
 type ProductCreate struct {
 	Name        string
 	StoreID     int64
+	PriceCents  int64
 	Ingredients []string
 	Calories    int64
 	ImageID     string
