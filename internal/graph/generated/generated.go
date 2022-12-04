@@ -54,6 +54,7 @@ type ComplexityRoot struct {
 		CreateProduct func(childComplexity int, input graphmodel.CreateProductInput) int
 		CreateStore   func(childComplexity int, input graphmodel.CreateStoreInput) int
 		CreateUser    func(childComplexity int, input graphmodel.CreateUserInput) int
+		DeleteProduct func(childComplexity int, productID int64) int
 		DeleteStore   func(childComplexity int, input graphmodel.DeleteStoreInput) int
 		UploadImage   func(childComplexity int, image graphql.Upload) int
 	}
@@ -65,6 +66,7 @@ type ComplexityRoot struct {
 		ImageID     func(childComplexity int) int
 		Ingredients func(childComplexity int) int
 		Name        func(childComplexity int) int
+		PriceCents  func(childComplexity int) int
 		StoreID     func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 	}
@@ -100,6 +102,7 @@ type MutationResolver interface {
 	DeleteStore(ctx context.Context, input graphmodel.DeleteStoreInput) (bool, error)
 	UploadImage(ctx context.Context, image graphql.Upload) (string, error)
 	CreateProduct(ctx context.Context, input graphmodel.CreateProductInput) (graphmodel.Product, error)
+	DeleteProduct(ctx context.Context, productID int64) (bool, error)
 }
 type QueryResolver interface {
 	GetAuthToken(ctx context.Context, input graphmodel.GetAuthTokenInput) (graphmodel.GetAuthTokenPayload, error)
@@ -164,6 +167,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateUser(childComplexity, args["input"].(graphmodel.CreateUserInput)), true
+
+	case "Mutation.deleteProduct":
+		if e.complexity.Mutation.DeleteProduct == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteProduct_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteProduct(childComplexity, args["productID"].(int64)), true
 
 	case "Mutation.deleteStore":
 		if e.complexity.Mutation.DeleteStore == nil {
@@ -230,6 +245,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Product.Name(childComplexity), true
+
+	case "Product.priceCents":
+		if e.complexity.Product.PriceCents == nil {
+			break
+		}
+
+		return e.complexity.Product.PriceCents(childComplexity), true
 
 	case "Product.storeID":
 		if e.complexity.Product.StoreID == nil {
@@ -460,6 +482,7 @@ input Pagination{
 	id: Int!
 	name: String!
 	storeID: Int!
+	priceCents: Int!
 	ingredients: [String!]!
 	calories: Int!
 	imageID: String!
@@ -470,6 +493,7 @@ input Pagination{
 input CreateProductInput{
 	name: String!
 	storeID: Int!
+	priceCents: Int!
 	ingredients: [String!]!
 	calories: Int!
 	imageID: String!
@@ -482,6 +506,7 @@ input CreateProductInput{
 	"""to get uploaded image visit /assets/imageID"""
 	uploadImage(image: Upload!): String! @isAuthenticated
 	createProduct(input: CreateProductInput!): Product! @isAuthenticated
+	deleteProduct(productID: Int!): Boolean! @isAuthenticated
 }
 
 type Query{
@@ -617,6 +642,21 @@ func (ec *executionContext) field_Mutation_createUser_args(ctx context.Context, 
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteProduct_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int64
+	if tmp, ok := rawArgs["productID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productID"))
+		arg0, err = ec.unmarshalNInt2int64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["productID"] = arg0
 	return args, nil
 }
 
@@ -1142,6 +1182,8 @@ func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Cont
 				return ec.fieldContext_Product_name(ctx, field)
 			case "storeID":
 				return ec.fieldContext_Product_storeID(ctx, field)
+			case "priceCents":
+				return ec.fieldContext_Product_priceCents(ctx, field)
 			case "ingredients":
 				return ec.fieldContext_Product_ingredients(ctx, field)
 			case "calories":
@@ -1164,6 +1206,81 @@ func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteProduct(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteProduct(rctx, fc.Args["productID"].(int64))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsAuthenticated == nil {
+				return nil, errors.New("directive isAuthenticated is not implemented")
+			}
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -1290,6 +1407,50 @@ func (ec *executionContext) _Product_storeID(ctx context.Context, field graphql.
 }
 
 func (ec *executionContext) fieldContext_Product_storeID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Product_priceCents(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_priceCents(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PriceCents, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_priceCents(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Product",
 		Field:      field,
@@ -4182,7 +4343,7 @@ func (ec *executionContext) unmarshalInputCreateProductInput(ctx context.Context
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "storeID", "ingredients", "calories", "imageID"}
+	fieldsInOrder := [...]string{"name", "storeID", "priceCents", "ingredients", "calories", "imageID"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4202,6 +4363,14 @@ func (ec *executionContext) unmarshalInputCreateProductInput(ctx context.Context
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storeID"))
 			it.StoreID, err = ec.unmarshalNInt2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "priceCents":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priceCents"))
+			it.PriceCents, err = ec.unmarshalNInt2int64(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -4666,6 +4835,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "deleteProduct":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteProduct(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4704,6 +4882,13 @@ func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, 
 		case "storeID":
 
 			out.Values[i] = ec._Product_storeID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "priceCents":
+
+			out.Values[i] = ec._Product_priceCents(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++

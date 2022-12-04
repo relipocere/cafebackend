@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/relipocere/cafebackend/internal/auth"
+	storedb "github.com/relipocere/cafebackend/internal/database/store"
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
@@ -25,7 +26,7 @@ func (h *Handler) DeleteStore(ctx context.Context, req DeleteStoreRequest) error
 		return fmt.Errorf("request validation: %w", err)
 	}
 
-	stores, err := h.storeRepo.Get(ctx, h.db, []int64{req.StoreID})
+	stores, err := h.storeRepo.Get(ctx, h.db, storedb.GetByIDs([]int64{req.StoreID}))
 	if err != nil {
 		return fmt.Errorf("get store %d: %w", req.StoreID, err)
 	}

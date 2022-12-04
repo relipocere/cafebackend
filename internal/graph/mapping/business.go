@@ -41,8 +41,9 @@ func MapToAffordability(a graphmodel.Affordability) model.Affordability {
 	return model.Affordability(a.String())
 }
 
+// MapToCuisine maps cuisine types to business entity.
 func MapToCuisines(cc []graphmodel.CuisineType) []model.Cuisine {
-	var cuisines []model.Cuisine
+	cuisines := make([]model.Cuisine, 0, len(cc))
 
 	for _, c := range cc {
 		cuisines = append(cuisines, MapToCuisine(c))

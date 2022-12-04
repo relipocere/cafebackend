@@ -5,15 +5,18 @@ import (
 	"time"
 
 	"github.com/relipocere/cafebackend/internal/database"
+	storedb "github.com/relipocere/cafebackend/internal/database/store"
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
 type productRepo interface {
 	Create(ctx context.Context, q database.Queryable, product model.ProductCreate) (int64, error)
+	Get(ctx context.Context, q database.Queryable, productIDs []int64) ([]model.Product, error)
+	Delete(ctx context.Context, q database.Queryable, productIDs []int64) error
 }
 
 type storeRepo interface {
-	Get(ctx context.Context, q database.Queryable, ids []int64) ([]model.Store, error)
+	Get(ctx context.Context, q database.Queryable, predicateFn storedb.GetPredicateFn) ([]model.Store, error)
 }
 
 // Handler handles product related scenarios.

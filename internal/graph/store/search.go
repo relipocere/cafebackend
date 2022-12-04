@@ -15,7 +15,7 @@ func (a *App) SearchStores(ctx context.Context, input graphmodel.SearchStoresInp
 
 	stores, err := a.storeHandler.SearchStores(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("buiness handler: %w", err)
+		return nil, fmt.Errorf("business handler: %w", err)
 	}
 
 	return mapping.MapStores(stores), nil

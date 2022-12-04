@@ -5,12 +5,13 @@ import (
 	"time"
 
 	"github.com/relipocere/cafebackend/internal/database"
+	storedb "github.com/relipocere/cafebackend/internal/database/store"
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
 type storeRepo interface {
 	Create(ctx context.Context, q database.Queryable, store model.StoreCreate) (int64, error)
-	Get(ctx context.Context, q database.Queryable, ids []int64) ([]model.Store, error)
+	Get(ctx context.Context, q database.Queryable, predicateFn storedb.GetPredicateFn) ([]model.Store, error)
 	Search(ctx context.Context, q database.Queryable, page model.Pagination, filter model.StoreFilter) ([]model.Store, error)
 	Delete(ctx context.Context, q database.Queryable, ids []int64) error
 }

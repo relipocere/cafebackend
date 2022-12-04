@@ -31,6 +31,7 @@ type storeHandler interface {
 
 type productHandler interface {
 	CreateProdcut(ctx context.Context, req producthandler.CreateProductRequest) (model.Product, error)
+	DeleteProduct(ctx context.Context, productID int64) error
 }
 
 type imageRepo interface {
@@ -111,6 +112,9 @@ func (m *mutationResolver) UploadImage(ctx context.Context, image graphql.Upload
 
 func (m *mutationResolver) CreateProduct(ctx context.Context, input graphmodel.CreateProductInput) (graphmodel.Product, error) {
 	return m.product.CreateProduct(ctx, input)
+}
+func (m *mutationResolver) DeleteProduct(ctx context.Context, productID int64) (bool, error) {
+	return m.product.DeleteProduct(ctx, productID)
 }
 
 func (r *Resolver) Query() generated.QueryResolver {

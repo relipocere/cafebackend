@@ -12,6 +12,7 @@ import (
 
 type productHandler interface {
 	CreateProdcut(ctx context.Context, req producthandler.CreateProductRequest) (model.Product, error)
+	DeleteProduct(ctx context.Context, productID int64) error
 }
 
 type App struct {
@@ -28,6 +29,7 @@ func (a *App) CreateProduct(ctx context.Context, input graphmodel.CreateProductI
 	product, err := a.productHandler.CreateProdcut(ctx, producthandler.CreateProductRequest{
 		Name:        input.Name,
 		StoreID:     input.StoreID,
+		PriceCents:  input.PriceCents,
 		Ingerdients: input.Ingredients,
 		Calories:    input.Calories,
 		ImageID:     input.ImageID,
@@ -37,4 +39,13 @@ func (a *App) CreateProduct(ctx context.Context, input graphmodel.CreateProductI
 	}
 
 	return mapping.MapProduct(product), nil
+}
+
+func (a *App) DeleteProduct(ctx context.Context, productID int64) (bool, error) {
+	err := a.productHandler.DeleteProduct(ctx, productID)
+	if err != nil {
+		return false, fmt.Errorf("business handler: %w", err)
+	}
+
+	return true, nil
 }
