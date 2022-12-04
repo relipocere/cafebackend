@@ -18,3 +18,10 @@ input CreateProductInput{
 	calories: Int!
 	imageID: String!
 }
+
+input SearchProductsInput{
+	page: Pagination!
+	storeIDs: [Int!]
+	priceCents: IntRange
+	calories: IntRange
+}

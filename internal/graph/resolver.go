@@ -32,6 +32,7 @@ type storeHandler interface {
 type productHandler interface {
 	CreateProdcut(ctx context.Context, req producthandler.CreateProductRequest) (model.Product, error)
 	DeleteProduct(ctx context.Context, productID int64) error
+	SearchProducts(ctx context.Context, req producthandler.SearchProductsRequest) ([]model.Product, error)
 }
 
 type imageRepo interface {
@@ -63,8 +64,9 @@ func NewResolver(
 			},
 
 			queryResolver: &queryResolver{
-				user:  userApp,
-				store: storeApp,
+				user:    userApp,
+				store:   storeApp,
+				product: productApp,
 			},
 		},
 	}
@@ -86,8 +88,9 @@ type mutationResolver struct {
 }
 
 type queryResolver struct {
-	user  *user.App
-	store *store.App
+	user    *user.App
+	store   *store.App
+	product *product.App
 }
 
 func (r *Resolver) Mutation() generated.MutationResolver {
@@ -134,4 +137,8 @@ func (q *queryResolver) Me(ctx context.Context) (graphmodel.User, error) {
 
 func (q *queryResolver) SearchStores(ctx context.Context, input graphmodel.SearchStoresInput) ([]graphmodel.Store, error) {
 	return q.store.SearchStores(ctx, input)
+}
+
+func (q *queryResolver) SearchProducts(ctx context.Context, input graphmodel.SearchProductsInput) ([]graphmodel.Product, error) {
+	return q.product.SearchProducts(ctx, input)
 }

@@ -13,6 +13,7 @@ type productRepo interface {
 	Create(ctx context.Context, q database.Queryable, product model.ProductCreate) (int64, error)
 	Get(ctx context.Context, q database.Queryable, productIDs []int64) ([]model.Product, error)
 	Delete(ctx context.Context, q database.Queryable, productIDs []int64) error
+	Search(ctx context.Context, q database.Queryable, page model.Pagination, filter model.ProductFilter) ([]model.Product, error)
 }
 
 type storeRepo interface {
