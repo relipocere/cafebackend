@@ -73,6 +73,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		GetAuthToken   func(childComplexity int, input graphmodel.GetAuthTokenInput) int
+		GetProducts    func(childComplexity int, productIDs []int64) int
 		Me             func(childComplexity int) int
 		SearchProducts func(childComplexity int, input graphmodel.SearchProductsInput) int
 		SearchStores   func(childComplexity int, input graphmodel.SearchStoresInput) int
@@ -110,6 +111,7 @@ type QueryResolver interface {
 	Me(ctx context.Context) (graphmodel.User, error)
 	SearchStores(ctx context.Context, input graphmodel.SearchStoresInput) ([]graphmodel.Store, error)
 	SearchProducts(ctx context.Context, input graphmodel.SearchProductsInput) ([]graphmodel.Product, error)
+	GetProducts(ctx context.Context, productIDs []int64) ([]graphmodel.Product, error)
 }
 
 type executableSchema struct {
@@ -280,6 +282,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetAuthToken(childComplexity, args["input"].(graphmodel.GetAuthTokenInput)), true
+
+	case "Query.getProducts":
+		if e.complexity.Query.GetProducts == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getProducts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetProducts(childComplexity, args["productIDs"].([]int64)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -536,6 +550,7 @@ type Query{
     me: User! @isAuthenticated
 	searchStores(input: SearchStoresInput!): [Store!] @isAuthenticated
 	searchProducts(input: SearchProductsInput!): [Product!] @isAuthenticated
+	getProducts(productIDs: [Int!]): [Product!] @isAuthenticated 
 }
 
 scalar Time
@@ -740,6 +755,21 @@ func (ec *executionContext) field_Query_getAuthToken_args(ctx context.Context, r
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getProducts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []int64
+	if tmp, ok := rawArgs["productIDs"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productIDs"))
+		arg0, err = ec.unmarshalOInt2ᚕint64ᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["productIDs"] = arg0
 	return args, nil
 }
 
@@ -2030,6 +2060,98 @@ func (ec *executionContext) fieldContext_Query_searchProducts(ctx context.Contex
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_searchProducts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getProducts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getProducts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().GetProducts(rctx, fc.Args["productIDs"].([]int64))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsAuthenticated == nil {
+				return nil, errors.New("directive isAuthenticated is not implemented")
+			}
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]graphmodel.Product); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []github.com/relipocere/cafebackend/internal/graph/graph-model.Product`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]graphmodel.Product)
+	fc.Result = res
+	return ec.marshalOProduct2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐProductᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getProducts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Product_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Product_name(ctx, field)
+			case "storeID":
+				return ec.fieldContext_Product_storeID(ctx, field)
+			case "priceCents":
+				return ec.fieldContext_Product_priceCents(ctx, field)
+			case "ingredients":
+				return ec.fieldContext_Product_ingredients(ctx, field)
+			case "calories":
+				return ec.fieldContext_Product_calories(ctx, field)
+			case "imageID":
+				return ec.fieldContext_Product_imageID(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Product_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Product_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getProducts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -5216,6 +5338,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_searchProducts(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getProducts":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getProducts(ctx, field)
 				return res
 			}
 
