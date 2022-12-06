@@ -10,8 +10,12 @@ import (
 )
 
 func (*Repo) Get(ctx context.Context, q database.Queryable, productIDs []int64) ([]model.Product, error) {
+	if len(productIDs) == 0{
+		return nil, nil
+	}
+
 	qb := baseSelectQuery.
-		Where(squirrel.Eq{"product_id": productIDs})
+		Where(squirrel.Eq{"id": productIDs})
 
 	var dtos []productDTO
 	err := q.Select(ctx, &dtos, qb)

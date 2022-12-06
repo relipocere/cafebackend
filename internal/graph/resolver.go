@@ -33,6 +33,7 @@ type productHandler interface {
 	CreateProdcut(ctx context.Context, req producthandler.CreateProductRequest) (model.Product, error)
 	DeleteProduct(ctx context.Context, productID int64) error
 	SearchProducts(ctx context.Context, req producthandler.SearchProductsRequest) ([]model.Product, error)
+	GetProdcuts(ctx context.Context, productIDs []int64) ([]model.Product, error)
 }
 
 type imageRepo interface {
@@ -141,4 +142,8 @@ func (q *queryResolver) SearchStores(ctx context.Context, input graphmodel.Searc
 
 func (q *queryResolver) SearchProducts(ctx context.Context, input graphmodel.SearchProductsInput) ([]graphmodel.Product, error) {
 	return q.product.SearchProducts(ctx, input)
+}
+
+func (q *queryResolver) GetProducts(ctx context.Context, productIDs []int64) ([]graphmodel.Product, error) {
+	return q.product.GetProducts(ctx, productIDs)
 }
