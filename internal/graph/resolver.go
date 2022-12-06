@@ -5,6 +5,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	producthandler "github.com/relipocere/cafebackend/internal/business/product-handler"
+	reviewhandler "github.com/relipocere/cafebackend/internal/business/review-handler"
 	storehandler "github.com/relipocere/cafebackend/internal/business/store-handler"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
 	"github.com/relipocere/cafebackend/internal/database"
@@ -13,6 +14,7 @@ import (
 	graphmodel "github.com/relipocere/cafebackend/internal/graph/graph-model"
 	"github.com/relipocere/cafebackend/internal/graph/image"
 	"github.com/relipocere/cafebackend/internal/graph/product"
+	"github.com/relipocere/cafebackend/internal/graph/review"
 	"github.com/relipocere/cafebackend/internal/graph/store"
 	"github.com/relipocere/cafebackend/internal/graph/user"
 	"github.com/relipocere/cafebackend/internal/model"
@@ -41,6 +43,11 @@ type imageRepo interface {
 	Get(ctx context.Context, q database.Queryable, imageID string) (*model.ImageMeta, error)
 }
 
+type reviewHandler interface {
+	CreateReview(ctx context.Context, req reviewhandler.CreateReviewRequest) (model.Review, error)
+	DeleteReview(ctx context.Context, reviewID int64) error
+}
+
 func NewResolver(
 	filesDir string,
 	db database.PGX,
@@ -48,12 +55,14 @@ func NewResolver(
 	userHandler userHandler,
 	storeHandler storeHandler,
 	productHandler productHandler,
+	reviewHandler reviewHandler,
 ) generated.Config {
 	userApp := user.NewApp(userHandler)
 	storeApp := store.NewApp(storeHandler)
 	directiveApp := directive.NewApp()
 	imageApp := image.NewApp(filesDir, db, imageRepo)
 	productApp := product.NewApp(productHandler)
+	reviewApp := review.NewApp(reviewHandler)
 
 	cfg := generated.Config{
 		Resolvers: &Resolver{
@@ -62,6 +71,7 @@ func NewResolver(
 				store:   storeApp,
 				image:   imageApp,
 				product: productApp,
+				review:  reviewApp,
 			},
 
 			queryResolver: &queryResolver{
@@ -86,6 +96,7 @@ type mutationResolver struct {
 	store   *store.App
 	image   *image.App
 	product *product.App
+	review  *review.App
 }
 
 type queryResolver struct {
@@ -119,6 +130,14 @@ func (m *mutationResolver) CreateProduct(ctx context.Context, input graphmodel.C
 }
 func (m *mutationResolver) DeleteProduct(ctx context.Context, productID int64) (bool, error) {
 	return m.product.DeleteProduct(ctx, productID)
+}
+
+func (m *mutationResolver) CreateReview(ctx context.Context, input graphmodel.CreateReviewInput) (graphmodel.Review, error) {
+	return m.review.CreateReview(ctx, input)
+}
+
+func (m *mutationResolver) DeleteReview(ctx context.Context, reviewID int64) (bool, error) {
+	return m.review.DeleteReview(ctx, reviewID)
 }
 
 func (r *Resolver) Query() generated.QueryResolver {

@@ -20,8 +20,8 @@ type ProductCreate struct {
 	UpdatedAt   time.Time
 }
 
-type ProductFilter struct{
-	StoreIDs []int64
+type ProductFilter struct {
+	StoreIDs   []int64
 	PriceCents *IntRange
-	Calories *IntRange
+	Calories   *IntRange
 }

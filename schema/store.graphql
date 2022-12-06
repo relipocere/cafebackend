@@ -33,7 +33,7 @@ type Store{
     cuisineType: CuisineType!
 	ownerUsername: String!
     imageID: String!
-	averageRating: Int!
+	averageRating: Float!
     createdAt: Time!
     updatedAt: Time!
 }

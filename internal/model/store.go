@@ -59,7 +59,7 @@ type StoreCreate struct {
 	Cuisine         Cuisine
 	OwnerUsername   string
 	ImageID         string
-	AverageRating   int64
+	AverageRating   float64
 	NumberOfReviews int64
 	CreatedAt       time.Time
 	UpdatedAt       time.Time

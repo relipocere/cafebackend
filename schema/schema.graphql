@@ -6,6 +6,8 @@ type Mutation{
 	uploadImage(image: Upload!): String! @isAuthenticated
 	createProduct(input: CreateProductInput!): Product! @isAuthenticated
 	deleteProduct(productID: Int!): Boolean! @isAuthenticated
+	createReview(input: CreateReviewInput!): Review! @isAuthenticated
+	deleteReview(reviewID: Int!): Boolean! @isAuthenticated
 }
 
 type Query{
