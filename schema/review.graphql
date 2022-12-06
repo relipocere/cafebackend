@@ -1,0 +1,14 @@
+type Review{
+	id: Int!
+	storeID: Int!
+	authorUsername: String!
+	rating: Int!
+	commentary: String!
+}
+
+
+input CreateReviewInput{
+	storeID: Int!
+	rating: Int!
+	commentary: String!
+}

@@ -52,9 +52,11 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		CreateProduct func(childComplexity int, input graphmodel.CreateProductInput) int
+		CreateReview  func(childComplexity int, input graphmodel.CreateReviewInput) int
 		CreateStore   func(childComplexity int, input graphmodel.CreateStoreInput) int
 		CreateUser    func(childComplexity int, input graphmodel.CreateUserInput) int
 		DeleteProduct func(childComplexity int, productID int64) int
+		DeleteReview  func(childComplexity int, reviewID int64) int
 		DeleteStore   func(childComplexity int, input graphmodel.DeleteStoreInput) int
 		UploadImage   func(childComplexity int, image graphql.Upload) int
 	}
@@ -76,6 +78,14 @@ type ComplexityRoot struct {
 		Me             func(childComplexity int) int
 		SearchProducts func(childComplexity int, input graphmodel.SearchProductsInput) int
 		SearchStores   func(childComplexity int, input graphmodel.SearchStoresInput) int
+	}
+
+	Review struct {
+		AuthorUsername func(childComplexity int) int
+		Commentary     func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Rating         func(childComplexity int) int
+		StoreID        func(childComplexity int) int
 	}
 
 	Store struct {
@@ -104,6 +114,8 @@ type MutationResolver interface {
 	UploadImage(ctx context.Context, image graphql.Upload) (string, error)
 	CreateProduct(ctx context.Context, input graphmodel.CreateProductInput) (graphmodel.Product, error)
 	DeleteProduct(ctx context.Context, productID int64) (bool, error)
+	CreateReview(ctx context.Context, input graphmodel.CreateReviewInput) (graphmodel.Review, error)
+	DeleteReview(ctx context.Context, reviewID int64) (bool, error)
 }
 type QueryResolver interface {
 	GetAuthToken(ctx context.Context, input graphmodel.GetAuthTokenInput) (graphmodel.GetAuthTokenPayload, error)
@@ -146,6 +158,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateProduct(childComplexity, args["input"].(graphmodel.CreateProductInput)), true
 
+	case "Mutation.createReview":
+		if e.complexity.Mutation.CreateReview == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createReview_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateReview(childComplexity, args["input"].(graphmodel.CreateReviewInput)), true
+
 	case "Mutation.createStore":
 		if e.complexity.Mutation.CreateStore == nil {
 			break
@@ -181,6 +205,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteProduct(childComplexity, args["productID"].(int64)), true
+
+	case "Mutation.deleteReview":
+		if e.complexity.Mutation.DeleteReview == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteReview_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteReview(childComplexity, args["reviewID"].(int64)), true
 
 	case "Mutation.deleteStore":
 		if e.complexity.Mutation.DeleteStore == nil {
@@ -312,6 +348,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SearchStores(childComplexity, args["input"].(graphmodel.SearchStoresInput)), true
 
+	case "Review.authorUsername":
+		if e.complexity.Review.AuthorUsername == nil {
+			break
+		}
+
+		return e.complexity.Review.AuthorUsername(childComplexity), true
+
+	case "Review.commentary":
+		if e.complexity.Review.Commentary == nil {
+			break
+		}
+
+		return e.complexity.Review.Commentary(childComplexity), true
+
+	case "Review.id":
+		if e.complexity.Review.ID == nil {
+			break
+		}
+
+		return e.complexity.Review.ID(childComplexity), true
+
+	case "Review.rating":
+		if e.complexity.Review.Rating == nil {
+			break
+		}
+
+		return e.complexity.Review.Rating(childComplexity), true
+
+	case "Review.storeID":
+		if e.complexity.Review.StoreID == nil {
+			break
+		}
+
+		return e.complexity.Review.StoreID(childComplexity), true
+
 	case "Store.affordability":
 		if e.complexity.Store.Affordability == nil {
 			break
@@ -405,6 +476,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputCreateProductInput,
+		ec.unmarshalInputCreateReviewInput,
 		ec.unmarshalInputCreateStoreInput,
 		ec.unmarshalInputCreateUserInput,
 		ec.unmarshalInputDeleteStoreInput,
@@ -521,6 +593,21 @@ input SearchProductsInput{
 	calories: IntRange
 }
 `, BuiltIn: false},
+	{Name: "../../../schema/review.graphql", Input: `type Review{
+	id: Int!
+	storeID: Int!
+	authorUsername: String!
+	rating: Int!
+	commentary: String!
+}
+
+
+input CreateReviewInput{
+	storeID: Int!
+	rating: Int!
+	commentary: String!
+}
+`, BuiltIn: false},
 	{Name: "../../../schema/schema.graphql", Input: `type Mutation{
     createUser(input: CreateUserInput!): Boolean!
     createStore(input: CreateStoreInput!): Store! @isAuthenticated
@@ -529,6 +616,8 @@ input SearchProductsInput{
 	uploadImage(image: Upload!): String! @isAuthenticated
 	createProduct(input: CreateProductInput!): Product! @isAuthenticated
 	deleteProduct(productID: Int!): Boolean! @isAuthenticated
+	createReview(input: CreateReviewInput!): Review! @isAuthenticated
+	deleteReview(reviewID: Int!): Boolean! @isAuthenticated
 }
 
 type Query{
@@ -580,7 +669,7 @@ type Store{
     cuisineType: CuisineType!
 	ownerUsername: String!
     imageID: String!
-	averageRating: Int!
+	averageRating: Float!
     createdAt: Time!
     updatedAt: Time!
 }
@@ -638,6 +727,21 @@ func (ec *executionContext) field_Mutation_createProduct_args(ctx context.Contex
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createReview_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 graphmodel.CreateReviewInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateReviewInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCreateReviewInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createStore_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -680,6 +784,21 @@ func (ec *executionContext) field_Mutation_deleteProduct_args(ctx context.Contex
 		}
 	}
 	args["productID"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteReview_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int64
+	if tmp, ok := rawArgs["reviewID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("reviewID"))
+		arg0, err = ec.unmarshalNInt2int64(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["reviewID"] = arg0
 	return args, nil
 }
 
@@ -1319,6 +1438,168 @@ func (ec *executionContext) fieldContext_Mutation_deleteProduct(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_deleteProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_createReview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createReview(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().CreateReview(rctx, fc.Args["input"].(graphmodel.CreateReviewInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsAuthenticated == nil {
+				return nil, errors.New("directive isAuthenticated is not implemented")
+			}
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(graphmodel.Review); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be github.com/relipocere/cafebackend/internal/graph/graph-model.Review`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(graphmodel.Review)
+	fc.Result = res
+	return ec.marshalNReview2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐReview(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createReview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Review_id(ctx, field)
+			case "storeID":
+				return ec.fieldContext_Review_storeID(ctx, field)
+			case "authorUsername":
+				return ec.fieldContext_Review_authorUsername(ctx, field)
+			case "rating":
+				return ec.fieldContext_Review_rating(ctx, field)
+			case "commentary":
+				return ec.fieldContext_Review_commentary(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Review", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createReview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteReview(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteReview(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Mutation().DeleteReview(rctx, fc.Args["reviewID"].(int64))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsAuthenticated == nil {
+				return nil, errors.New("directive isAuthenticated is not implemented")
+			}
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.(bool); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be bool`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteReview(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteReview_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -2165,6 +2446,226 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Review_id(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Review) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Review_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Review_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Review",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Review_storeID(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Review) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Review_storeID(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StoreID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Review_storeID(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Review",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Review_authorUsername(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Review) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Review_authorUsername(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.AuthorUsername, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Review_authorUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Review",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Review_rating(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Review) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Review_rating(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Rating, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int64)
+	fc.Result = res
+	return ec.marshalNInt2int64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Review_rating(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Review",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Review_commentary(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Review) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Review_commentary(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Commentary, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Review_commentary(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Review",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Store_id(ctx context.Context, field graphql.CollectedField, obj *graphmodel.Store) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Store_id(ctx, field)
 	if err != nil {
@@ -2455,9 +2956,9 @@ func (ec *executionContext) _Store_averageRating(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int64)
+	res := resTmp.(float64)
 	fc.Result = res
-	return ec.marshalNInt2int64(ctx, field.Selections, res)
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Store_averageRating(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2467,7 +2968,7 @@ func (ec *executionContext) fieldContext_Store_averageRating(ctx context.Context
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type Float does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4534,6 +5035,50 @@ func (ec *executionContext) unmarshalInputCreateProductInput(ctx context.Context
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateReviewInput(ctx context.Context, obj interface{}) (graphmodel.CreateReviewInput, error) {
+	var it graphmodel.CreateReviewInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"storeID", "rating", "commentary"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "storeID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storeID"))
+			it.StoreID, err = ec.unmarshalNInt2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rating":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rating"))
+			it.Rating, err = ec.unmarshalNInt2int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "commentary":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commentary"))
+			it.Commentary, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateStoreInput(ctx context.Context, obj interface{}) (graphmodel.CreateStoreInput, error) {
 	var it graphmodel.CreateStoreInput
 	asMap := map[string]interface{}{}
@@ -5026,6 +5571,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "createReview":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createReview(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteReview":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteReview(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5238,6 +5801,62 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				return ec._Query___schema(ctx, field)
 			})
 
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var reviewImplementors = []string{"Review"}
+
+func (ec *executionContext) _Review(ctx context.Context, sel ast.SelectionSet, obj *graphmodel.Review) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, reviewImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Review")
+		case "id":
+
+			out.Values[i] = ec._Review_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "storeID":
+
+			out.Values[i] = ec._Review_storeID(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "authorUsername":
+
+			out.Values[i] = ec._Review_authorUsername(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "rating":
+
+			out.Values[i] = ec._Review_rating(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "commentary":
+
+			out.Values[i] = ec._Review_commentary(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5723,6 +6342,11 @@ func (ec *executionContext) unmarshalNCreateProductInput2githubᚗcomᚋrelipoce
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreateReviewInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCreateReviewInput(ctx context.Context, v interface{}) (graphmodel.CreateReviewInput, error) {
+	res, err := ec.unmarshalInputCreateReviewInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCreateStoreInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐCreateStoreInput(ctx context.Context, v interface{}) (graphmodel.CreateStoreInput, error) {
 	res, err := ec.unmarshalInputCreateStoreInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5746,6 +6370,21 @@ func (ec *executionContext) marshalNCuisineType2githubᚗcomᚋrelipocereᚋcafe
 func (ec *executionContext) unmarshalNDeleteStoreInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐDeleteStoreInput(ctx context.Context, v interface{}) (graphmodel.DeleteStoreInput, error) {
 	res, err := ec.unmarshalInputDeleteStoreInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalNGetAuthTokenInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐGetAuthTokenInput(ctx context.Context, v interface{}) (graphmodel.GetAuthTokenInput, error) {
@@ -5779,6 +6418,10 @@ func (ec *executionContext) unmarshalNPagination2githubᚗcomᚋrelipocereᚋcaf
 
 func (ec *executionContext) marshalNProduct2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐProduct(ctx context.Context, sel ast.SelectionSet, v graphmodel.Product) graphql.Marshaler {
 	return ec._Product(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNReview2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐReview(ctx context.Context, sel ast.SelectionSet, v graphmodel.Review) graphql.Marshaler {
+	return ec._Review(ctx, sel, &v)
 }
 
 func (ec *executionContext) unmarshalNSearchProductsInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐSearchProductsInput(ctx context.Context, v interface{}) (graphmodel.SearchProductsInput, error) {

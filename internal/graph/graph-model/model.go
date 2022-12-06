@@ -18,6 +18,12 @@ type CreateProductInput struct {
 	ImageID     string   `json:"imageID"`
 }
 
+type CreateReviewInput struct {
+	StoreID    int64  `json:"storeID"`
+	Rating     int64  `json:"rating"`
+	Commentary string `json:"commentary"`
+}
+
 type CreateStoreInput struct {
 	Title         string        `json:"title"`
 	Affordability Affordability `json:"affordability"`
@@ -69,6 +75,14 @@ type Product struct {
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
+type Review struct {
+	ID             int64  `json:"id"`
+	StoreID        int64  `json:"storeID"`
+	AuthorUsername string `json:"authorUsername"`
+	Rating         int64  `json:"rating"`
+	Commentary     string `json:"commentary"`
+}
+
 type SearchProductsInput struct {
 	Page       Pagination `json:"page"`
 	StoreIDs   []int64    `json:"storeIDs"`
@@ -92,7 +106,7 @@ type Store struct {
 	CuisineType   CuisineType   `json:"cuisineType"`
 	OwnerUsername string        `json:"ownerUsername"`
 	ImageID       string        `json:"imageID"`
-	AverageRating int64         `json:"averageRating"`
+	AverageRating float64       `json:"averageRating"`
 	CreatedAt     time.Time     `json:"createdAt"`
 	UpdatedAt     time.Time     `json:"updatedAt"`
 }

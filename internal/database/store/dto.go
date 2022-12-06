@@ -29,7 +29,7 @@ type storeDto struct {
 	CuisineType     string    `db:"cuisine"`
 	OwnerUsername   string    `db:"owner_username"`
 	ImageID         string    `db:"image_id"`
-	AverageRating   int64     `db:"avg_rating"`
+	AverageRating   float64   `db:"avg_rating"`
 	NumberOfReviews int64     `db:"number_of_reviews"`
 	CreatedAt       time.Time `db:"created_at"`
 	UpdatedAt       time.Time `db:"updated_at"`

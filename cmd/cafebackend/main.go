@@ -10,11 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 	producthandler "github.com/relipocere/cafebackend/internal/business/product-handler"
+	reviewhandler "github.com/relipocere/cafebackend/internal/business/review-handler"
 	storehandler "github.com/relipocere/cafebackend/internal/business/store-handler"
 	userhandler "github.com/relipocere/cafebackend/internal/business/user-handler"
 	"github.com/relipocere/cafebackend/internal/database"
 	"github.com/relipocere/cafebackend/internal/database/image"
 	"github.com/relipocere/cafebackend/internal/database/product"
+	"github.com/relipocere/cafebackend/internal/database/review"
 	"github.com/relipocere/cafebackend/internal/database/store"
 	"github.com/relipocere/cafebackend/internal/database/user"
 	"github.com/relipocere/cafebackend/internal/graph"
@@ -45,12 +47,14 @@ func main() {
 	storeRepo := store.NewRepo()
 	imageRepo := image.NewRepo()
 	productRepo := product.NewRepo()
+	reviewRepo := review.NewRepo()
 
 	masterNode := database.NewPGX(pgxPool)
 
 	userHandler := userhandler.NewHandler(masterNode, userRepo)
 	storeHandler := storehandler.NewHandler(masterNode, storeRepo)
 	productHandler := producthandler.NewHandler(masterNode, productRepo, storeRepo)
+	reviewHandler := reviewhandler.NewHandler(masterNode, storeRepo, reviewRepo)
 
 	resolver := graph.NewResolver(
 		filesDir,
@@ -59,6 +63,7 @@ func main() {
 		userHandler,
 		storeHandler,
 		productHandler,
+		reviewHandler,
 	)
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(resolver))
 	srv.SetErrorPresenter(middleware.ErrorHandlerMw())

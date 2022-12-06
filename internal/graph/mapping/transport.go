@@ -7,6 +7,28 @@ import (
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
+// MapReviews maps business reviews to graphql reviews.
+func MapReviews(rr []model.Review) []graphmodel.Review {
+	reviews := make([]graphmodel.Review, 0, len(rr))
+
+	for _, r := range rr {
+		reviews = append(reviews, MapReview(r))
+	}
+
+	return reviews
+}
+
+// MapReview maps business review to graphql review.
+func MapReview(r model.Review) graphmodel.Review {
+	return graphmodel.Review{
+		ID:             r.ID,
+		StoreID:        r.StoreID,
+		AuthorUsername: r.AuthorUsername,
+		Rating:         r.Rating,
+		Commentary:     r.Commentary,
+	}
+}
+
 // MapProducts maps business products to graphql products.
 func MapProducts(pp []model.Product) []graphmodel.Product {
 	products := make([]graphmodel.Product, 0, len(pp))
