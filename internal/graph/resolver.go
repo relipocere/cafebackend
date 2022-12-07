@@ -46,6 +46,7 @@ type imageRepo interface {
 type reviewHandler interface {
 	CreateReview(ctx context.Context, req reviewhandler.CreateReviewRequest) (model.Review, error)
 	DeleteReview(ctx context.Context, reviewID int64) error
+	SearchReviews(ctx context.Context, req reviewhandler.SearchReviewsRequest) ([]model.Review, error)
 }
 
 func NewResolver(
@@ -78,6 +79,7 @@ func NewResolver(
 				user:    userApp,
 				store:   storeApp,
 				product: productApp,
+				review:  reviewApp,
 			},
 		},
 	}
@@ -103,6 +105,7 @@ type queryResolver struct {
 	user    *user.App
 	store   *store.App
 	product *product.App
+	review  *review.App
 }
 
 func (r *Resolver) Mutation() generated.MutationResolver {
@@ -165,4 +168,8 @@ func (q *queryResolver) SearchProducts(ctx context.Context, input graphmodel.Sea
 
 func (q *queryResolver) GetProducts(ctx context.Context, productIDs []int64) ([]graphmodel.Product, error) {
 	return q.product.GetProducts(ctx, productIDs)
+}
+
+func (q *queryResolver) SearchReviews(ctx context.Context, input graphmodel.SearchReviewsInput) ([]graphmodel.Review, error) {
+	return q.review.SearchReviews(ctx, input)
 }

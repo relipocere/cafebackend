@@ -16,6 +16,7 @@ type Query{
 	searchStores(input: SearchStoresInput!): [Store!] @isAuthenticated
 	searchProducts(input: SearchProductsInput!): [Product!] @isAuthenticated
 	getProducts(productIDs: [Int!]): [Product!] @isAuthenticated 
+	searchReviews(input: SearchReviewsInput!): [Review!] @isAuthenticated
 }
 
 scalar Time
