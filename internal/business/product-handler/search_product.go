@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/relipocere/cafebackend/internal/business/validation"
 	"github.com/relipocere/cafebackend/internal/model"
 )
 
@@ -15,6 +16,11 @@ type SearchProductsRequest struct {
 }
 
 func (h *Handler) SearchProducts(ctx context.Context, req SearchProductsRequest) ([]model.Product, error) {
+	err := validateSearchProductsRequest(req)
+	if err != nil {
+		return nil, fmt.Errorf("validation: %w", err)
+	}
+
 	products, err := h.productRepo.Search(ctx, h.db, req.Page, model.ProductFilter{
 		StoreIDs:   req.StoreIDs,
 		PriceCents: req.PriceCents,
@@ -25,4 +31,13 @@ func (h *Handler) SearchProducts(ctx context.Context, req SearchProductsRequest)
 	}
 
 	return products, nil
+}
+
+func validateSearchProductsRequest(req SearchProductsRequest) error {
+	err := validation.ValidatePagination(req.Page)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

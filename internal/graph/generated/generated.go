@@ -78,6 +78,7 @@ type ComplexityRoot struct {
 		GetProducts    func(childComplexity int, productIDs []int64) int
 		Me             func(childComplexity int) int
 		SearchProducts func(childComplexity int, input graphmodel.SearchProductsInput) int
+		SearchReviews  func(childComplexity int, input graphmodel.SearchReviewsInput) int
 		SearchStores   func(childComplexity int, input graphmodel.SearchStoresInput) int
 	}
 
@@ -124,6 +125,7 @@ type QueryResolver interface {
 	SearchStores(ctx context.Context, input graphmodel.SearchStoresInput) ([]graphmodel.Store, error)
 	SearchProducts(ctx context.Context, input graphmodel.SearchProductsInput) ([]graphmodel.Product, error)
 	GetProducts(ctx context.Context, productIDs []int64) ([]graphmodel.Product, error)
+	SearchReviews(ctx context.Context, input graphmodel.SearchReviewsInput) ([]graphmodel.Review, error)
 }
 
 type executableSchema struct {
@@ -350,6 +352,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.SearchProducts(childComplexity, args["input"].(graphmodel.SearchProductsInput)), true
 
+	case "Query.searchReviews":
+		if e.complexity.Query.SearchReviews == nil {
+			break
+		}
+
+		args, err := ec.field_Query_searchReviews_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SearchReviews(childComplexity, args["input"].(graphmodel.SearchReviewsInput)), true
+
 	case "Query.searchStores":
 		if e.complexity.Query.SearchStores == nil {
 			break
@@ -498,6 +512,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputIntRange,
 		ec.unmarshalInputPagination,
 		ec.unmarshalInputSearchProductsInput,
+		ec.unmarshalInputSearchReviewsInput,
 		ec.unmarshalInputSearchStoresInput,
 	)
 	first := true
@@ -621,6 +636,13 @@ input CreateReviewInput{
 	rating: Int!
 	commentary: String!
 }
+
+input SearchReviewsInput{
+	page: Pagination!
+	storeIDs: [Int!]
+	authorUsernames: [String!]
+	rating: IntRange
+}
 `, BuiltIn: false},
 	{Name: "../../../schema/schema.graphql", Input: `type Mutation{
     createUser(input: CreateUserInput!): Boolean!
@@ -640,6 +662,7 @@ type Query{
 	searchStores(input: SearchStoresInput!): [Store!] @isAuthenticated
 	searchProducts(input: SearchProductsInput!): [Product!] @isAuthenticated
 	getProducts(productIDs: [Int!]): [Product!] @isAuthenticated 
+	searchReviews(input: SearchReviewsInput!): [Review!] @isAuthenticated
 }
 
 scalar Time
@@ -899,6 +922,21 @@ func (ec *executionContext) field_Query_searchProducts_args(ctx context.Context,
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNSearchProductsInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐSearchProductsInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_searchReviews_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 graphmodel.SearchReviewsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNSearchReviewsInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐSearchReviewsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2433,6 +2471,90 @@ func (ec *executionContext) fieldContext_Query_getProducts(ctx context.Context, 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getProducts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_searchReviews(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_searchReviews(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		directive0 := func(rctx context.Context) (interface{}, error) {
+			ctx = rctx // use context from middleware stack in children
+			return ec.resolvers.Query().SearchReviews(rctx, fc.Args["input"].(graphmodel.SearchReviewsInput))
+		}
+		directive1 := func(ctx context.Context) (interface{}, error) {
+			if ec.directives.IsAuthenticated == nil {
+				return nil, errors.New("directive isAuthenticated is not implemented")
+			}
+			return ec.directives.IsAuthenticated(ctx, nil, directive0)
+		}
+
+		tmp, err := directive1(rctx)
+		if err != nil {
+			return nil, graphql.ErrorOnPath(ctx, err)
+		}
+		if tmp == nil {
+			return nil, nil
+		}
+		if data, ok := tmp.([]graphmodel.Review); ok {
+			return data, nil
+		}
+		return nil, fmt.Errorf(`unexpected type %T from directive, should be []github.com/relipocere/cafebackend/internal/graph/graph-model.Review`, tmp)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]graphmodel.Review)
+	fc.Result = res
+	return ec.marshalOReview2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐReviewᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_searchReviews(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Review_id(ctx, field)
+			case "storeID":
+				return ec.fieldContext_Review_storeID(ctx, field)
+			case "authorUsername":
+				return ec.fieldContext_Review_authorUsername(ctx, field)
+			case "rating":
+				return ec.fieldContext_Review_rating(ctx, field)
+			case "commentary":
+				return ec.fieldContext_Review_commentary(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Review", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_searchReviews_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -5516,6 +5638,58 @@ func (ec *executionContext) unmarshalInputSearchProductsInput(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSearchReviewsInput(ctx context.Context, obj interface{}) (graphmodel.SearchReviewsInput, error) {
+	var it graphmodel.SearchReviewsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"page", "storeIDs", "authorUsernames", "rating"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "page":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+			it.Page, err = ec.unmarshalNPagination2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐPagination(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "storeIDs":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storeIDs"))
+			it.StoreIDs, err = ec.unmarshalOInt2ᚕint64ᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "authorUsernames":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("authorUsernames"))
+			it.AuthorUsernames, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rating":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rating"))
+			it.Rating, err = ec.unmarshalOIntRange2ᚖgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐIntRange(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSearchStoresInput(ctx context.Context, obj interface{}) (graphmodel.SearchStoresInput, error) {
 	var it graphmodel.SearchStoresInput
 	asMap := map[string]interface{}{}
@@ -5921,6 +6095,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getProducts(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "searchReviews":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_searchReviews(ctx, field)
 				return res
 			}
 
@@ -6571,6 +6765,11 @@ func (ec *executionContext) unmarshalNSearchProductsInput2githubᚗcomᚋrelipoc
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNSearchReviewsInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐSearchReviewsInput(ctx context.Context, v interface{}) (graphmodel.SearchReviewsInput, error) {
+	res, err := ec.unmarshalInputSearchReviewsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNSearchStoresInput2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐSearchStoresInput(ctx context.Context, v interface{}) (graphmodel.SearchStoresInput, error) {
 	res, err := ec.unmarshalInputSearchStoresInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7174,6 +7373,53 @@ func (ec *executionContext) marshalOProduct2ᚕgithubᚗcomᚋrelipocereᚋcafeb
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalNProduct2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐProduct(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOReview2ᚕgithubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐReviewᚄ(ctx context.Context, sel ast.SelectionSet, v []graphmodel.Review) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNReview2githubᚗcomᚋrelipocereᚋcafebackendᚋinternalᚋgraphᚋgraphᚑmodelᚐReview(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

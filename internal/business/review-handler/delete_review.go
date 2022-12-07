@@ -61,7 +61,7 @@ func (h *Handler) DeleteReview(ctx context.Context, reviewID int64) error {
 		tx,
 		review.StoreID,
 		now,
-		storedb.SetAverageRating(int64(newAverage)),
+		storedb.SetAverageRating(newAverage),
 		storedb.SetNumberOfReviews(store.NumberOfReviews-1),
 	)
 	if err != nil {

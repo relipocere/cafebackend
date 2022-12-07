@@ -23,7 +23,7 @@ func (h *Handler) SearchStores(ctx context.Context, req SearchStoresRequest) ([]
 
 	stores, err := h.storeRepo.Search(ctx, h.db, req.Page, req.Filter)
 	if err != nil {
-		return nil, fmt.Errorf("stores search: %w", err)
+		return nil, fmt.Errorf("search of stores: %w", err)
 	}
 
 	return stores, nil

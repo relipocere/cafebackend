@@ -10,7 +10,7 @@ import (
 )
 
 func (*Repo) Get(ctx context.Context, q database.Queryable, productIDs []int64) ([]model.Product, error) {
-	if len(productIDs) == 0{
+	if len(productIDs) == 0 {
 		return nil, nil
 	}
 

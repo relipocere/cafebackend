@@ -90,6 +90,13 @@ type SearchProductsInput struct {
 	Calories   *IntRange  `json:"calories"`
 }
 
+type SearchReviewsInput struct {
+	Page            Pagination `json:"page"`
+	StoreIDs        []int64    `json:"storeIDs"`
+	AuthorUsernames []string   `json:"authorUsernames"`
+	Rating          *IntRange  `json:"rating"`
+}
+
 type SearchStoresInput struct {
 	Page           Pagination      `json:"page"`
 	TitleQuery     *string         `json:"titleQuery"`

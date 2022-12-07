@@ -13,6 +13,7 @@ import (
 type reviewHandler interface {
 	CreateReview(ctx context.Context, req reviewhandler.CreateReviewRequest) (model.Review, error)
 	DeleteReview(ctx context.Context, reviewID int64) error
+	SearchReviews(ctx context.Context, req reviewhandler.SearchReviewsRequest) ([]model.Review, error)
 }
 
 type App struct {
@@ -45,4 +46,22 @@ func (a *App) DeleteReview(ctx context.Context, reviewID int64) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (a *App) SearchReviews(ctx context.Context, input graphmodel.SearchReviewsInput) ([]graphmodel.Review, error) {
+	page := mapping.MapToPagination(input.Page)
+
+	reviews, err := a.reviewHandler.SearchReviews(ctx, reviewhandler.SearchReviewsRequest{
+		Page: page,
+		Filter: model.ReviewFilter{
+			StoreIDs:        input.StoreIDs,
+			AuthorUsernames: input.AuthorUsernames,
+			Rating:          mapping.MapToIntRange(input.Rating),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("business handler: %w", err)
+	}
+
+	return mapping.MapReviews(reviews), nil
 }

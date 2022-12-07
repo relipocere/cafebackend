@@ -12,3 +12,10 @@ input CreateReviewInput{
 	rating: Int!
 	commentary: String!
 }
+
+input SearchReviewsInput{
+	page: Pagination!
+	storeIDs: [Int!]
+	authorUsernames: [String!]
+	rating: IntRange
+}
