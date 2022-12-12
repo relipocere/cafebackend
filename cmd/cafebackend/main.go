@@ -121,7 +121,25 @@ func mustInitViper() {
 	viper.SetConfigType("toml")
 	viper.AddConfigPath(".")
 
+	binds := map[string]string{
+		"psql.host":        "PSQL_HOST",
+		"psql.user":        "PSQL_USER",
+		"psql.password":    "PSQL_PASSWORD",
+		"psql.port":        "PSQL_PORT",
+		"psql.database":    "PSQL_DATABASE",
+		"server.port":      "SERVER_PORT",
+		"server.files_dir": "SERVER_FILES_DIR",
+	}
+
+	for key, alias := range binds {
+		bindErr := viper.BindEnv(key, alias)
+		if bindErr != nil {
+			zap.S().Fatalf("bind env: %v", bindErr)
+		}
+	}
+
 	viper.SetDefault("server.port", ":9000")
+	viper.SetDefault("server.files_dir", "/data")
 
 	err := viper.ReadInConfig()
 	if err != nil {
